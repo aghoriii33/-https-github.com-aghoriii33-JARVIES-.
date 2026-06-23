@@ -175,7 +175,7 @@ export default function ChatScreen({
       <HologramOverlay isVisible={isThinking} />
 
       {/* Top Console Header Bar */}
-      <header className="relative z-20 flex justify-between items-center pb-4 border-b border-white/5 bg-black/80 backdrop-blur-md">
+      <header className="relative z-20 flex flex-wrap sm:flex-nowrap justify-between items-center gap-2 pb-4 border-b border-white/5 bg-black/80 backdrop-blur-md">
         <button
           onClick={() => onNavigate(ActiveScreen.DASHBOARD)}
           className="p-1 px-2.5 rounded-full bg-zinc-900 border border-white/5 hover:border-cyan-400/40 text-gray-400 hover:text-cyan-400 flex items-center gap-1 text-xs font-mono transition-all cursor-pointer"
@@ -185,8 +185,8 @@ export default function ChatScreen({
         </button>
 
         <div className="flex items-center gap-2">
-          <span className="font-sans text-sm font-bold text-white tracking-tight">JARVIS Neural Core Stream</span>
-          <span className="relative flex h-2.5 w-2.5">
+          <span className="font-sans text-xs sm:text-sm font-bold text-white tracking-tight truncate max-w-[130px] sm:max-w-none">JARVIS Core Stream</span>
+          <span className="relative flex h-2.5 w-2.5 shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500" />
           </span>

@@ -386,7 +386,7 @@ export default function LoginScreen({ onLoginSuccess, voicePersonality, onVoiceP
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="relative min-h-[100dvh] w-full flex flex-col justify-between items-center px-4 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-y-auto overflow-x-hidden bg-[#030305] text-gray-200"
+      className="relative min-h-[100dvh] w-full flex flex-col justify-between items-center px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-y-auto overflow-x-hidden bg-[#030305] text-gray-200"
     >
       {/* 1. Custom CSS Styles Injection for Siri Fluids & Animations */}
       <style>{`
@@ -512,7 +512,7 @@ export default function LoginScreen({ onLoginSuccess, voicePersonality, onVoiceP
       </div>
 
       {/* 3. Sleek Header HUD Bar */}
-      <header className="relative z-30 w-full flex items-center justify-between pb-4 max-w-7xl mx-auto select-none">
+      <header className="relative z-30 w-full flex flex-wrap gap-3 items-center justify-between pb-4 max-w-7xl mx-auto select-none">
         {/* Left Side: Neural Core Status */}
         <div className="flex items-center gap-3 px-3.5 py-1.5 bg-white/[0.03] border border-white/10 rounded-xl">
           <span className="relative flex h-2 w-2">
@@ -633,7 +633,7 @@ export default function LoginScreen({ onLoginSuccess, voicePersonality, onVoiceP
         {/* Right Side Grid: Glassmorphic Credentials Verification Card */}
         <div className="lg:col-span-6 flex flex-col justify-center items-center w-full">
           
-          <div className="w-full max-w-[420px] rounded-[24px] sm:rounded-[36px] lg:rounded-[44px] border border-white/10 bg-[#0d0d12]/40 backdrop-blur-3xl px-4 py-5 sm:px-8 sm:py-9 lg:px-9 lg:py-10 shadow-[0_30px_90px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.08),0_0_40px_rgba(139,92,246,0.05)] relative overflow-hidden">
+          <div className="w-full max-w-[420px] mx-auto rounded-[24px] sm:rounded-[36px] lg:rounded-[44px] border border-white/10 bg-[#0d0d12]/40 backdrop-blur-3xl px-3 py-5 sm:px-8 sm:py-9 lg:px-9 lg:py-10 shadow-[0_30px_90px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.08),0_0_40px_rgba(139,92,246,0.05)] relative overflow-hidden">
             
             {/* Elegant multi-color background beam glowing along the card edge */}
             <div className="absolute right-0 top-1/4 bottom-1/4 w-[1px] bg-gradient-to-b from-[#ff2d55] via-[#af52de] to-[#5ac8fa] opacity-75 filter blur-[1px]" />
@@ -649,13 +649,16 @@ export default function LoginScreen({ onLoginSuccess, voicePersonality, onVoiceP
                   transition={{ duration: 0.3 }}
                 >
                   {/* Glowing X33 Tech Logo */}
-                  <div className="flex justify-center mb-2.5 sm:mb-4 select-none">
-                    <div className="relative group/x33 font-mono text-2xl sm:text-3xl font-black tracking-[0.15em] flex items-center justify-center gap-0.5">
-                      <span className={isFriday ? "text-pink-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]" : "text-[#5ac8fa] drop-shadow-[0_0_8px_rgba(90,200,250,0.5)]"}>X</span>
-                      <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]">33</span>
-                      <span className="absolute -top-1 -right-2.5 flex h-2 w-2">
-                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${themeAccentBgClassLite}`} />
-                        <span className={`relative inline-flex rounded-full h-2 w-2 ${themeAccentBgClassLite}`} />
+                  <div className="flex justify-center mb-4 sm:mb-6 select-none relative group/x33">
+                    <div 
+                      className="font-mono font-black flex items-center justify-center tracking-[0.15em] relative z-10"
+                      style={{ fontSize: "clamp(1.75rem, 5vw, 2.5rem)" }}
+                    >
+                      <span className={`text-transparent bg-clip-text bg-gradient-to-br ${isFriday ? "from-pink-400 to-rose-600 drop-shadow-[0_0_15px_rgba(244,63,94,0.6)]" : "from-cyan-400 to-blue-600 drop-shadow-[0_0_15px_rgba(34,211,238,0.6)]"}`}>X</span>
+                      <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-500 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">33</span>
+                      <span className="absolute top-[0.15em] -right-4 flex h-2 w-2 sm:h-2.5 sm:w-2.5">
+                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-80 ${themeAccentBgClassLite}`} />
+                        <span className={`relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 ${themeAccentBgClassLite} shadow-[0_0_8px_currentColor]`} />
                       </span>
                     </div>
                   </div>
@@ -952,7 +955,9 @@ export default function LoginScreen({ onLoginSuccess, voicePersonality, onVoiceP
                       className="w-full flex items-center px-4 py-3.5 bg-white/[0.02] hover:bg-white/[0.06] border border-white/10 rounded-[15px] text-sm text-white/80 hover:text-white transition-all cursor-pointer relative group"
                     >
                       <div className="absolute left-5 flex items-center">
-                        <span className={`text-[10px] sm:text-xs font-mono font-black border border-white/20 rounded px-1 ${isFriday ? "text-pink-400" : "text-[#5ac8fa]"}`}>X33</span>
+                        <span className={`text-[13px] sm:text-sm font-mono font-black tracking-widest ${isFriday ? "text-pink-400 drop-shadow-[0_0_5px_rgba(244,63,94,0.4)]" : "text-[#5ac8fa] drop-shadow-[0_0_5px_rgba(90,200,250,0.4)]"}`}>
+                          X<span className="text-white">33</span>
+                        </span>
                       </div>
                       <span className="w-full text-center font-normal">Continue with X33</span>
                     </button>

@@ -92,14 +92,14 @@ export default function DashboardScreen({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
       transition={{ duration: 0.35 }}
-      className="relative h-full w-full flex flex-col bg-black text-[#e2e2e2] px-6 py-6"
+      className="relative h-full w-full flex flex-col bg-black text-[#e2e2e2] p-3 sm:p-5 md:px-6 md:py-6"
     >
       {/* Dynamic Backing Elements */}
       <div className="absolute -right-20 bottom-24 w-80 h-80 rounded-full bg-cyan-900/10 blur-3xl pointer-events-none" />
       <div className="absolute -left-20 top-20 w-72 h-72 rounded-full bg-purple-900/10 blur-3xl pointer-events-none" />
 
       {/* Top Application Bar */}
-      <header className="flex justify-between items-center pb-4 border-b border-white/5 relative z-20 gap-2">
+      <header className="flex flex-wrap sm:flex-nowrap justify-between items-center pb-4 border-b border-white/5 relative z-20 gap-3">
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             onClick={() => setShowSettings(!showSettings)}

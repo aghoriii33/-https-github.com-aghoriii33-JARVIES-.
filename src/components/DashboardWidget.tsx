@@ -18,7 +18,7 @@ export default function DashboardWidget() {
   }, []);
 
   return (
-    <div className="grid grid-cols-3 gap-3 w-full mb-6">
+    <div className="grid grid-cols-3 gap-1.5 sm:gap-3 w-full mb-6">
       <WidgetCard 
         icon={<Cpu className="w-4 h-4 text-cyan-400" />} 
         title="CPU LOAD" 
@@ -48,16 +48,16 @@ function WidgetCard({ icon, title, value, accent, valueColor }: { icon: ReactNod
   return (
     <motion.div 
       whileHover={{ scale: 1.02, y: -2 }}
-      className={`bg-zinc-950/40 backdrop-blur-md border ${accent} rounded-xl p-3 flex flex-col justify-between h-20 shadow-[0_4px_20px_rgba(0,0,0,0.15)] relative overflow-hidden group cursor-default`}
+      className={`bg-zinc-950/40 backdrop-blur-md border ${accent} rounded-xl p-2 sm:p-3 flex flex-col justify-between h-20 shadow-[0_4px_20px_rgba(0,0,0,0.15)] relative overflow-hidden group cursor-default`}
     >
       <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
          {icon}
       </div>
       <div className="flex items-center gap-2 relative z-10">
         {icon}
-        <span className="text-[9px] font-mono font-bold text-gray-500 uppercase tracking-wider">{title}</span>
+        <span className="text-[8px] sm:text-[9px] font-mono font-bold text-gray-500 uppercase tracking-wider">{title}</span>
       </div>
-      <div className={`text-lg font-mono font-bold tracking-tight relative z-10 ${valueColor}`}>
+      <div className={`text-base sm:text-lg font-mono font-bold tracking-tight relative z-10 ${valueColor}`}>
         {value}
       </div>
     </motion.div>
