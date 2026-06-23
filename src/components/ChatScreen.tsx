@@ -28,6 +28,7 @@ interface ChatScreenProps {
   isThinking: boolean;
   voiceOutput: boolean;
   onVoiceOutputChange?: (enabled: boolean) => void;
+  voicePersonality?: "jarvis" | "friday";
   key?: string;
 }
 
@@ -37,7 +38,8 @@ export default function ChatScreen({
   messages,
   isThinking,
   voiceOutput,
-  onVoiceOutputChange
+  onVoiceOutputChange,
+  voicePersonality = "jarvis"
 }: ChatScreenProps) {
   const [inputText, setInputText] = useState("");
   const endOfMessagesRef = useRef<HTMLDivElement | null>(null);
@@ -60,15 +62,33 @@ export default function ChatScreen({
           if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel(); // Stop current speech
             const utterance = new SpeechSynthesisUtterance(latestMessage.text);
-            utterance.rate = 1.05; // Slightly faster for AI feel
-            utterance.pitch = 0.9; // Slightly lower pitch for Paul Bettany feel
+            if (voicePersonality === "friday") {
+              const voices = window.speechSynthesis.getVoices();
+              const femaleVoice = voices.find(v => 
+                v.name.toLowerCase().includes("female") || 
+                v.name.toLowerCase().includes("zira") || 
+                v.name.toLowerCase().includes("samantha") || 
+                v.name.toLowerCase().includes("karen") ||
+                v.name.toLowerCase().includes("google us english") ||
+                v.name.toLowerCase().includes("moira") ||
+                v.name.toLowerCase().includes("sara") ||
+                v.name.toLowerCase().includes("tessa") ||
+                v.name.toLowerCase().includes("hazel")
+              );
+              if (femaleVoice) utterance.voice = femaleVoice;
+              utterance.rate = 1.15; // Joyful & upbeat fast rate
+              utterance.pitch = 1.45; // Energetic high-pitched anime tone
+            } else {
+              utterance.rate = 1.05; // Slightly faster for AI feel
+              utterance.pitch = 0.9; // Slightly lower pitch for Paul Bettany feel
+            }
             window.speechSynthesis.speak(utterance);
           }
         }
       }
     }
     prevMessagesLengthRef.current = messages.length;
-  }, [messages, voiceOutput]);
+  }, [messages, voiceOutput, voicePersonality]);
 
   // Handle immediate voice cancel when voiceOutput changes to false
   useEffect(() => {
@@ -91,8 +111,26 @@ export default function ChatScreen({
     if (voiceOutput && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel(); // Stop current speech
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.05; // Slightly faster for AI feel
-      utterance.pitch = 0.9; // Slightly lower pitch for Paul Bettany feel
+      if (voicePersonality === "friday") {
+        const voices = window.speechSynthesis.getVoices();
+        const femaleVoice = voices.find(v => 
+          v.name.toLowerCase().includes("female") || 
+          v.name.toLowerCase().includes("zira") || 
+          v.name.toLowerCase().includes("samantha") || 
+          v.name.toLowerCase().includes("karen") ||
+          v.name.toLowerCase().includes("google us english") ||
+          v.name.toLowerCase().includes("moira") ||
+          v.name.toLowerCase().includes("sara") ||
+          v.name.toLowerCase().includes("tessa") ||
+          v.name.toLowerCase().includes("hazel")
+        );
+        if (femaleVoice) utterance.voice = femaleVoice;
+        utterance.rate = 1.15;
+        utterance.pitch = 1.45;
+      } else {
+        utterance.rate = 1.05;
+        utterance.pitch = 0.9;
+      }
       window.speechSynthesis.speak(utterance);
     }
   };

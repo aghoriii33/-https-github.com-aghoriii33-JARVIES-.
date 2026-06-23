@@ -46,19 +46,30 @@ export default function VoiceVisualizer({
     return () => clearInterval(interval);
   }, [isActive, count]);
 
+  const siriColors = [
+    "#FF2D55", // Siri Pink
+    "#FF9500", // Siri Orange
+    "#AF52DE", // Siri Purple
+    "#5856D6", // Siri Indigo
+    "#5AC8FA", // Siri Cyan
+    "#34C759", // Siri Green
+  ];
+
   return (
     <div className="flex items-end justify-center gap-1.5 h-20 w-full max-w-xs mx-auto px-4 pointer-events-none">
       {heights.map((h, i) => {
         // Compute brightness opacity based on dynamic height
-        const opacity = 0.25 + (h / 100) * 0.75;
+        const opacity = 0.35 + (h / 100) * 0.65;
+        const color = siriColors[i % siriColors.length];
         return (
           <div
             key={i}
-            className={`w-1.5 rounded-full ${barColor} transition-all duration-100`}
+            className="w-1.5 rounded-full transition-all duration-100"
             style={{
               height: `${h}%`,
               opacity: opacity,
-              boxShadow: h > 60 ? "0 0 10px rgba(165, 231, 255, 0.4)" : "none"
+              backgroundColor: color,
+              boxShadow: `0 0 12px ${color}`,
             }}
           />
         );

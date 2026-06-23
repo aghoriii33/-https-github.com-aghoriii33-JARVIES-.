@@ -18,10 +18,15 @@ import {
   Film,
   Github,
   Mail,
-  Grid
+  Grid,
+  Trash2,
+  ShieldCheck,
+  Globe
 } from "lucide-react";
 import { Conversation, ActiveScreen, UserAvatar } from "../types";
 import DashboardWidget from "./DashboardWidget";
+import { SupportedLanguage, translations } from "../locales";
+import NeuralHealthIndicator from "./NeuralHealthIndicator";
 
 interface DashboardScreenProps {
   conversations: Conversation[];
@@ -31,6 +36,8 @@ interface DashboardScreenProps {
   aiModel: string;
   appTheme: "dark" | "light";
   onThemeChange: (theme: "dark" | "light") => void;
+  currentLanguage: SupportedLanguage;
+  onLanguageChange: (lang: SupportedLanguage) => void;
   voiceOutput: boolean;
   onUserNameChange: (name: string) => void;
   onUserAvatarChange: (avatar: UserAvatar) => void;
@@ -42,6 +49,8 @@ interface DashboardScreenProps {
   onQuickAction: (actionText: string) => void;
   githubRepo: string;
   onGithubRepoChange: (url: string) => void;
+  onDeleteConversation?: (id: string) => void;
+  onDeleteAllConversations?: () => void;
   key?: string;
 }
 
@@ -53,6 +62,8 @@ export default function DashboardScreen({
   aiModel,
   appTheme,
   onThemeChange,
+  currentLanguage,
+  onLanguageChange,
   voiceOutput,
   onUserNameChange,
   onUserAvatarChange,
@@ -63,10 +74,14 @@ export default function DashboardScreen({
   onStartNewChat,
   onQuickAction,
   githubRepo,
-  onGithubRepoChange
+  onGithubRepoChange,
+  onDeleteConversation,
+  onDeleteAllConversations
 }: DashboardScreenProps) {
   const [selectedTab, setSelectedTab] = useState<"all" | "saved" | "files" | "models">("all");
   const [showSettings, setShowSettings] = useState(false);
+
+  const t = translations[currentLanguage] || translations.en;
 
   // Filter conversations/info based on tabs
   const filteredConversations = conversations;
@@ -131,6 +146,8 @@ export default function DashboardScreen({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-3 shrink min-w-0">
+          <NeuralHealthIndicator appTheme={appTheme} />
+
           <a
             href={githubRepo}
             target="_blank"
@@ -160,13 +177,74 @@ export default function DashboardScreen({
       </header>
 
       {/* Main View Container */}
-      <div className="flex-1 overflow-y-auto no-scrollbar pt-6 pb-20 relative z-10 space-y-8">
+      <div className="flex-1 overflow-y-auto no-scrollbar pt-6 pb-20 relative z-10 space-y-8 animate-fade-in" id="main-dashboard-viewport">
         
+        {/* Quick System Controls: Language & Theme Switcher */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 bg-zinc-900/35 border border-white/5 rounded-2xl shadow-xl z-20" id="quick-preference-console">
+          {/* Theme Selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono uppercase text-gray-500 tracking-wider flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-cyan-400" />
+              Theme:
+            </span>
+            <div className="flex bg-black/50 p-0.5 rounded-lg border border-white/5">
+              <button
+                key="theme-dark"
+                type="button"
+                onClick={() => onThemeChange("dark")}
+                className={`px-3 py-1 rounded-md text-[9px] font-mono uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                  appTheme === "dark"
+                    ? "bg-cyan-950/45 border border-cyan-400/35 text-cyan-400 font-bold"
+                    : "text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                {t.blackTheme}
+              </button>
+              <button
+                key="theme-light"
+                type="button"
+                onClick={() => onThemeChange("light")}
+                className={`px-3 py-1 rounded-md text-[9px] font-mono uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                  appTheme === "light"
+                    ? "bg-amber-950/45 border border-amber-400/35 text-amber-400 font-bold"
+                    : "text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                {t.brightTheme}
+              </button>
+            </div>
+          </div>
+
+          {/* Language Matrix */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono uppercase text-gray-500 tracking-wider flex items-center gap-1">
+              <Globe className="w-3.5 h-3.5 text-cyan-400" />
+              LAN:
+            </span>
+            <div className="flex bg-black/50 p-0.5 rounded-lg border border-white/5 gap-0.5">
+              {(["en", "es", "de", "zh", "fr"] as const).map((lang) => (
+                <button
+                  key={`lang-${lang}`}
+                  type="button"
+                  onClick={() => onLanguageChange(lang)}
+                  className={`px-2 py-0.5 rounded text-[9px] font-mono font-black uppercase transition-all duration-200 cursor-pointer ${
+                    currentLanguage === lang
+                      ? "bg-cyan-500 text-black shadow-[0_0_8px_rgba(6,182,212,0.4)]"
+                      : "text-gray-500 hover:text-gray-300"
+                  }`}
+                >
+                  {lang}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Dynamic Welcome Title */}
-        <div className="space-y-1.5">
-          <p className="text-xs uppercase tracking-widest font-mono text-gray-500">Welcome back, {userName}.</p>
+        <div className="space-y-1.5 text-left" id="welcome-message-deck">
+          <p className="text-xs uppercase tracking-widest font-mono text-gray-500">{t.welcomeBack}, {userName}.</p>
           <h2 className="text-3xl font-extrabold tracking-tight text-white leading-tight">
-            How may I help <br />you today?
+            {t.howHelp}
           </h2>
         </div>
 
@@ -183,10 +261,10 @@ export default function DashboardScreen({
             </div>
             <div className="w-full">
               <div className="flex justify-between items-center w-full">
-                <span className="text-sm font-bold font-sans text-black">Talk with JARVIS</span>
+                <span className="text-sm font-bold font-sans text-black">{t.talkJarvis}</span>
                 <ChevronRight className="w-4 h-4 text-black group-hover:translate-x-1 transition-transform" />
               </div>
-              <p className="text-[10px] text-black/70 font-mono mt-1">Activate high-latency sound-orb</p>
+              <p className="text-[10px] text-black/70 font-mono mt-1">{t.talkJarvisSub}</p>
             </div>
           </button>
 
@@ -200,10 +278,10 @@ export default function DashboardScreen({
             </div>
             <div className="w-full">
               <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-white font-sans">Chat with Bot</span>
+                <span className="text-xs font-bold text-white font-sans">{t.chatBot}</span>
                 <ChevronRight className="w-3.5 h-3.5 text-white group-hover:translate-x-1 transition-transform" />
               </div>
-              <p className="text-[9px] text-pink-100/60 font-mono mt-0.5">Real-time Cognitive AI</p>
+              <p className="text-[9px] text-pink-100/60 font-mono mt-0.5">{t.chatBotSub}</p>
             </div>
           </button>
 
@@ -236,8 +314,8 @@ export default function DashboardScreen({
                 <Database className="w-6 h-6 text-cyan-300" />
               </div>
               <div className="text-left">
-                <span className="text-sm font-bold text-white font-sans block">Knowledge Repository</span>
-                <span className="text-[10px] text-cyan-100/60 font-mono mt-0.5 block">Store research schemas & manuals</span>
+                <span className="text-sm font-bold text-white font-sans block">{t.knowledgeRepo}</span>
+                <span className="text-[10px] text-cyan-100/60 font-mono mt-0.5 block">{t.knowledgeRepoSub}</span>
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-cyan-300 group-hover:translate-x-2 transition-transform" />
@@ -270,11 +348,45 @@ export default function DashboardScreen({
                 <Grid className="w-6 h-6 text-amber-400" />
               </div>
               <div className="text-left">
-                <span className="text-sm font-bold text-white font-sans block">Workspace Cockpit</span>
-                <span className="text-[10px] text-amber-100/60 font-mono mt-0.5 block">Securely manage Gmail, Google Calendar & Google Tasks</span>
+                <span className="text-sm font-bold text-white font-sans block">{t.workspaceConnect}</span>
+                <span className="text-[10px] text-amber-100/60 font-mono mt-0.5 block">{t.workspaceConnectSub}</span>
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-amber-400 group-hover:translate-x-2 transition-transform" />
+          </button>
+
+          {/* Compliance & Risk Engine Controller */}
+          <button
+            onClick={() => onNavigate(ActiveScreen.COMPLIANCE_ENGINE)}
+            className="col-span-2 h-24 rounded-2xl bg-gradient-to-r from-zinc-900 to-emerald-950 p-4 flex items-center justify-between border border-emerald-500/30 shadow-[0_4px_30px_rgba(16,185,129,0.15)] hover:shadow-[0_4px_45px_rgba(16,185,129,0.35)] transition-all cursor-pointer group active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-black/40 flex items-center justify-center border border-emerald-400/30">
+                <ShieldCheck className="w-6 h-6 text-emerald-400" />
+              </div>
+              <div className="text-left">
+                <span className="text-sm font-bold text-white font-sans block">{t.complianceEngine}</span>
+                <span className="text-[10px] text-emerald-100/60 font-mono mt-0.5 block">{t.complianceEngineSub}</span>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-emerald-400 group-hover:translate-x-2 transition-transform" />
+          </button>
+
+          {/* Synaptic AI Core Training Portal */}
+          <button
+            onClick={() => onNavigate(ActiveScreen.NEURAL_TRAINING)}
+            className="col-span-2 h-24 rounded-2xl bg-gradient-to-r from-cyan-950/60 to-purple-950/60 p-4 flex items-center justify-between border border-cyan-400/30 shadow-[0_4px_30px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_45px_rgba(6,182,212,0.35)] transition-all cursor-pointer group active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-black/40 flex items-center justify-center border border-cyan-400/30">
+                <BrainCircuit className="w-6 h-6 text-cyan-400 animate-pulse animate-duration-1000" />
+              </div>
+              <div className="text-left font-sans">
+                <span className="text-sm font-bold text-white block">{t.neuralTuner}</span>
+                <span className="text-[10px] text-cyan-100/60 font-mono mt-0.5 block">{t.neuralTunerSub}</span>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-cyan-400 group-hover:translate-x-2 transition-transform" />
           </button>
 
 
@@ -346,10 +458,20 @@ export default function DashboardScreen({
           )}
 
           {selectedTab === "models" && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 rounded-xl bg-zinc-950 border border-white/5 space-y-2 text-xs font-mono text-gray-400">
-              <p>🧠 Core Language Agent: Google Gemini 3.5 Flash</p>
-              <p>⚡ Latency Threshold: ~240ms</p>
-              <p>🔊 Speech Synthesizer Modality: PCM 24kHz</p>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 rounded-xl bg-zinc-950 border border-white/5 space-y-3.5 text-xs font-mono text-gray-400 text-left">
+              <div className="space-y-1">
+                <p>🧠 Core Language Agent: Google Gemini 3.5 Flash</p>
+                <p>⚡ Latency Threshold: ~240ms</p>
+                <p>🔊 Speech Synthesizer Modality: PCM 24kHz</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigate(ActiveScreen.NEURAL_TRAINING)}
+                className="w-full mt-2.5 py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-950/60 to-purple-800/60 hover:from-cyan-900 hover:to-purple-800 border border-cyan-500/20 text-[#5ac8fa] text-[10px] font-bold tracking-widest uppercase flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm group"
+              >
+                <BrainCircuit className="w-4 h-4 text-cyan-400 animate-pulse group-hover:scale-110 transition-transform" />
+                <span>COMMENCE SYNAPSE TRAINING</span>
+              </button>
             </motion.div>
           )}
         </div>
@@ -388,7 +510,10 @@ export default function DashboardScreen({
         <div className="space-y-4">
           <div className="flex justify-between items-center px-1">
             <h3 className="text-xs uppercase tracking-widest font-mono text-gray-500 font-bold">Recent Diagnostics</h3>
-            <span className="text-[10px] font-mono text-cyan-400 hover:underline cursor-pointer">See all</span>
+            <div className="flex gap-4">
+              <span onClick={onDeleteAllConversations} className="text-[10px] font-mono text-red-400 hover:underline cursor-pointer flex items-center gap-1"><Trash2 className="w-3 h-3" /> Clear</span>
+              <span className="text-[10px] font-mono text-cyan-400 hover:underline cursor-pointer">See all</span>
+            </div>
           </div>
 
           <div className="space-y-3.5">
@@ -398,31 +523,42 @@ export default function DashboardScreen({
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 onClick={() => onSelectConversation(convo.id)}
-                className="group p-4 rounded-xl bg-zinc-950 hover:bg-zinc-900 border border-white/5 hover:border-cyan-400/40 cursor-pointer flex gap-4 transition-all"
+                className="group p-4 rounded-xl bg-zinc-950 hover:bg-zinc-900 border border-white/5 hover:border-cyan-400/40 cursor-pointer flex justify-between items-center transition-all"
               >
-                {/* Custom glowing dynamic icon badge */}
-                <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-zinc-900 border border-white/10 flex items-center justify-center shadow-inner">
-                  {convo.iconName === "chat" && <Sparkles className={`w-5 h-5 ${convo.iconColor}`} />}
-                  {convo.iconName === "code" && <BrainCircuit className={`w-5 h-5 ${convo.iconColor}`} />}
-                  {convo.iconName === "stats" && <Sparkles className={`w-5 h-5 ${convo.iconColor}`} />}
-                  {convo.iconName === "history" && <Sparkles className={`w-5 h-5 ${convo.iconColor}`} />}
-                  {convo.iconName === "file" && <Folder className={`w-5 h-5 ${convo.iconColor}`} />}
-                </div>
-
-                {/* Listing Details */}
-                <div className="flex-1 min-w-0 flex flex-col justify-between">
-                  <div className="flex justify-between items-start">
-                    <h4 className="text-sm font-semibold text-white group-hover:text-cyan-400 transition-colors truncate pr-2 font-sans">
-                      {convo.title}
-                    </h4>
-                    <span className="text-[9px] font-mono uppercase text-gray-500 whitespace-nowrap pt-0.5">
-                      {convo.timeAgo}
-                    </span>
+                <div className="flex gap-4 flex-1 min-w-0">
+                  {/* Custom glowing dynamic icon badge */}
+                  <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-zinc-900 border border-white/10 flex items-center justify-center shadow-inner">
+                    {convo.iconName === "chat" && <Sparkles className={`w-5 h-5 ${convo.iconColor}`} />}
+                    {convo.iconName === "code" && <BrainCircuit className={`w-5 h-5 ${convo.iconColor}`} />}
+                    {convo.iconName === "stats" && <Sparkles className={`w-5 h-5 ${convo.iconColor}`} />}
+                    {convo.iconName === "history" && <Sparkles className={`w-5 h-5 ${convo.iconColor}`} />}
+                    {convo.iconName === "file" && <Folder className={`w-5 h-5 ${convo.iconColor}`} />}
                   </div>
-                  <p className="text-xs text-gray-400 line-clamp-1 font-sans font-light mt-1">
-                    {convo.preview}
-                  </p>
+
+                  {/* Listing Details */}
+                  <div className="flex-1 min-w-0 flex flex-col justify-between pr-2">
+                    <div className="flex justify-between items-start">
+                      <h4 className="text-sm font-semibold text-white group-hover:text-cyan-400 transition-colors truncate pr-2 font-sans">
+                        {convo.title}
+                      </h4>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-[9px] font-mono uppercase text-gray-500 whitespace-nowrap pt-0.5">
+                          {convo.timeAgo}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-400 line-clamp-1 font-sans font-light mt-1">
+                      {convo.preview}
+                    </p>
+                  </div>
                 </div>
+                
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onDeleteConversation?.(convo.id); }}
+                  className="p-2 opacity-0 group-hover:opacity-100 hover:text-red-400 transition-all z-10"
+                >
+                  <Trash2 className="w-4 h-4 text-gray-500 hover:text-red-400" />
+                </button>
               </motion.div>
             ))}
           </div>

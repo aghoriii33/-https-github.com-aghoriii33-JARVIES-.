@@ -99,55 +99,6 @@
           event.stopImmediatePropagation();
         }
       }, true);
-
-      // Wrapper to prevent Vite HMR WebSocket client errors entirely
-      if (typeof window.WebSocket !== 'undefined') {
-        const OriginalWebSocket = window.WebSocket;
-        const SafeWebSocket = function(url, protocols) {
-          const ws = new OriginalWebSocket(url, protocols);
-          
-          ws.addEventListener('error', function(e) {
-            if (url.includes('ais-dev') || url.includes('localhost') || url.includes('127.0.0.1')) {
-              if (e.preventDefault) e.preventDefault();
-              if (e.stopPropagation) e.stopPropagation();
-              if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-            }
-          }, { capture: true });
-
-          let originalOnError = null;
-          Object.defineProperty(ws, 'onerror', {
-            get: function() {
-              return originalOnError;
-            },
-            set: function(fn) {
-              originalOnError = fn;
-              ws.addEventListener('error', function(e) {
-                if (url.includes('ais-dev') || url.includes('localhost') || url.includes('127.0.0.1')) {
-                  if (e.preventDefault) e.preventDefault();
-                  if (e.stopPropagation) e.stopPropagation();
-                  if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-                }
-                if (fn) {
-                  try {
-                    fn.apply(ws, arguments);
-                  } catch(err) {
-                    // Suppressed
-                  }
-                }
-              });
-            }
-          });
-          
-          return ws;
-        };
-        SafeWebSocket.prototype = OriginalWebSocket.prototype;
-        for (const prop in OriginalWebSocket) {
-          if (Object.prototype.hasOwnProperty.call(OriginalWebSocket, prop)) {
-            SafeWebSocket[prop] = OriginalWebSocket[prop];
-          }
-        }
-        window.WebSocket = SafeWebSocket;
-      }
     </script>
   </head>
   <body>

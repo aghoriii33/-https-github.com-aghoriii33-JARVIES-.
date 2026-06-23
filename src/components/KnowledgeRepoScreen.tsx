@@ -18,11 +18,13 @@ import {
 } from "lucide-react";
 import { ActiveScreen, KnowledgeDocument } from "../types";
 import { getAccessToken, signInWithGoogle } from "../firebase";
+import SleekConfirmModal from "./SleekConfirmModal";
 
 interface KnowledgeRepoScreenProps {
   documents: KnowledgeDocument[];
   onAddDocument: (doc: KnowledgeDocument) => void;
   onRemoveDocument: (id: string) => void;
+  onClearDocuments?: () => void;
   onNavigate: (screen: ActiveScreen) => void;
 }
 
@@ -30,6 +32,7 @@ export default function KnowledgeRepoScreen({
   documents,
   onAddDocument,
   onRemoveDocument,
+  onClearDocuments,
   onNavigate
 }: KnowledgeRepoScreenProps) {
   // Navigation & General tabs
@@ -64,6 +67,21 @@ export default function KnowledgeRepoScreen({
   // Local to Drive export loader tracker
   const [exportingLocalId, setExportingLocalId] = useState<string | null>(null);
 
+  // Operational Confirmation Dialogue State
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    themeColor?: "cyan" | "red" | "gold";
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
   // Sync token from Firebase Auth core state
   useEffect(() => {
     const activeToken = getAccessToken();
@@ -91,6 +109,21 @@ export default function KnowledgeRepoScreen({
     setIsAdding(false);
     setNewTitle("");
     setNewContent("");
+  };
+
+  const handlePurgeAllDocuments = () => {
+    if (!onClearDocuments) return;
+    setConfirmConfig({
+      isOpen: true,
+      title: "CRITICAL ALERT: REPOSITORY PURGE DIRECTIVE",
+      message: "WARNING: High-stakes memory wipe command initiated. You are about to clear all registered local core schemas and intelligence documents. This action completely sanitizes the core database matrix, is irreversible, and requires immediate total security clearance overlay.",
+      confirmText: "CONFIRM PURGE",
+      themeColor: "red",
+      onConfirm: () => {
+        onClearDocuments();
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
   // FETCH GOOGLE DRIVE LIST
@@ -229,29 +262,35 @@ export default function KnowledgeRepoScreen({
     const token = getAccessToken() || driveToken;
     if (!token) return;
     
-    const confirmed = window.confirm(
-      `JARVIS SECURITY DIALOGUE: Are you sure you want to permanently delete '${fileName}' from your Google Drive? This operation cannot be rolled back.`
-    );
-    if (!confirmed) return;
-
-    setDriveLoading(true);
-    try {
-      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) {
-        throw new Error("Authorization insufficient or file was deleted elsewhere.");
+    setConfirmConfig({
+      isOpen: true,
+      title: "JARVIS DRIVE PURGE DIALOGUE",
+      message: `Are you absolutely sure you want to permanently delete '${fileName}' from your Google Drive? This operation is irreversible.`,
+      themeColor: "red",
+      confirmText: "DELETE PERMANENTLY",
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        setDriveLoading(true);
+        setDriveError(null);
+        try {
+          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!res.ok) {
+            throw new Error("Authorization insufficient or file was deleted elsewhere.");
+          }
+          fetchDriveFiles(currentFolderId, driveSearchQuery);
+          if (selectedDriveFile?.id === fileId) {
+            setSelectedDriveFile(null);
+          }
+        } catch (err: any) {
+          setDriveError("Hologram Elimination Failed: " + err.message);
+        } finally {
+          setDriveLoading(false);
+        }
       }
-      fetchDriveFiles(currentFolderId, driveSearchQuery);
-      if (selectedDriveFile?.id === fileId) {
-        setSelectedDriveFile(null);
-      }
-    } catch (err: any) {
-      alert("Hologram Elimination Failed: " + err.message);
-    } finally {
-      setDriveLoading(false);
-    }
+    });
   };
 
   // INGEST VIEWED DRIVE CONTENT TO JARVIS CORE MEMORY (LOCAL REPO)
@@ -441,16 +480,29 @@ export default function KnowledgeRepoScreen({
                 )}
               </AnimatePresence>
 
-              {/* Search */}
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-cyan-500/50" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Scan memory banks..."
-                  className="w-full pl-9 pr-4 py-3 bg-zinc-900 border border-cyan-400/20 rounded-xl text-sm focus:border-cyan-400 focus:outline-none transition-all placeholder-cyan-900/50"
-                />
+              {/* Search & Actions Bar */}
+              <div className="flex gap-2.5 items-center">
+                <div className="relative flex-grow">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-cyan-500/50" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Scan memory banks..."
+                    className="w-full pl-9 pr-4 py-3 bg-zinc-900 border border-cyan-400/20 rounded-xl text-sm focus:border-cyan-400 focus:outline-none transition-all placeholder-cyan-900/50"
+                  />
+                </div>
+                {documents.length > 0 && onClearDocuments && (
+                  <button
+                    type="button"
+                    onClick={handlePurgeAllDocuments}
+                    className="h-11 px-4 rounded-xl bg-red-950/45 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-black hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] text-[10px] font-mono font-black tracking-widest uppercase transition-all duration-300 flex items-center gap-1.5 cursor-pointer shrink-0"
+                    title="Purge all system schemas permanently"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>PURGE POOL</span>
+                  </button>
+                )}
               </div>
 
               {/* Local List */}
@@ -785,6 +837,17 @@ export default function KnowledgeRepoScreen({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Sleek Operational Confirmation Dialogue */}
+      <SleekConfirmModal
+        isOpen={confirmConfig.isOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        themeColor={confirmConfig.themeColor}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+      />
     </motion.div>
   );
 }

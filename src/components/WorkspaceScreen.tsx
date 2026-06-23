@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { ActiveScreen } from "../types";
 import { getAccessToken, signInWithGoogle } from "../firebase";
+import SleekConfirmModal from "./SleekConfirmModal";
 
 interface WorkspaceScreenProps {
   onNavigate: (screen: ActiveScreen) => void;
@@ -39,6 +40,21 @@ export default function WorkspaceScreen({ onNavigate }: WorkspaceScreenProps) {
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [errorMess, setErrorMess] = useState<string | null>(null);
+
+  // Operational Confirmation Dialogue State
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    themeColor?: "cyan" | "red" | "gold";
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   // Gmail Data State
   const [emails, setEmails] = useState<any[]>([]);
@@ -325,22 +341,31 @@ export default function WorkspaceScreen({ onNavigate }: WorkspaceScreenProps) {
 
   const handleDeleteEvent = async (eventId: string, summary: string) => {
     if (!authToken) return;
-    const confirmed = window.confirm(`JARVIS: Are you absolutely sure you want to remove '${summary}' from your Google Calendar schedule?`);
-    if (!confirmed) return;
 
-    setActionLoading(true);
-    try {
-      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${authToken}` }
-      });
-      if (!res.ok) throw new Error("Event elimination disapproved by server.");
-      fetchEvents();
-    } catch (e: any) {
-      alert("Failed removal: " + e.message);
-    } finally {
-      setActionLoading(false);
-    }
+    setConfirmConfig({
+      isOpen: true,
+      title: "CALENDAR SCHEDULE PURGE",
+      message: `Are you absolutely sure you want to remove '${summary}' from your Google Calendar schedule? This tactical session will be deleted from cloud synchronizations.`,
+      themeColor: "red",
+      confirmText: "REMOVE SCHEDULE",
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        setActionLoading(true);
+        setErrorMess(null);
+        try {
+          const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${authToken}` }
+          });
+          if (!res.ok) throw new Error("Event elimination disapproved by server.");
+          fetchEvents();
+        } catch (e: any) {
+          setErrorMess("Failed removal: " + e.message);
+        } finally {
+          setActionLoading(false);
+        }
+      }
+    });
   };
 
   // --- GOOGLE TASKS SERVICES ---
@@ -471,26 +496,35 @@ export default function WorkspaceScreen({ onNavigate }: WorkspaceScreenProps) {
       if (!res.ok) throw new Error("Could not propagate task state update.");
       fetchTasks(selectedListId);
     } catch (e: any) {
-      alert("Task completion parity update failed: " + e.message);
+      setErrorMess("Task completion parity update failed: " + e.message);
       fetchTasks(selectedListId);
     }
   };
 
   const handleDeleteTask = async (taskId: string, title: string) => {
     if (!authToken || !selectedListId) return;
-    const confirmed = window.confirm(`JARVIS: Purge '${title}' completely from list memory?`);
-    if (!confirmed) return;
 
-    try {
-      const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${selectedListId}/tasks/${taskId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${authToken}` }
-      });
-      if (!res.ok) throw new Error("Could not clear task structure.");
-      fetchTasks(selectedListId);
-    } catch (e: any) {
-      alert("Clear error: " + e.message);
-    }
+    setConfirmConfig({
+      isOpen: true,
+      title: "TASKS LOG MATRIX PURGE",
+      message: `Are you absolutely sure you want to permanently purge task '${title}' from your Google Tasks records? This cannot be recovered.`,
+      themeColor: "red",
+      confirmText: "PURGE TASK",
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        setErrorMess(null);
+        try {
+          const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${selectedListId}/tasks/${taskId}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${authToken}` }
+          });
+          if (!res.ok) throw new Error("Could not clear task structure.");
+          fetchTasks(selectedListId);
+        } catch (e: any) {
+          setErrorMess("Clear error: " + e.message);
+        }
+      }
+    });
   };
 
   return (
@@ -1144,6 +1178,17 @@ export default function WorkspaceScreen({ onNavigate }: WorkspaceScreenProps) {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Sleek Operational Confirmation Dialogue */}
+      <SleekConfirmModal
+        isOpen={confirmConfig.isOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        themeColor={confirmConfig.themeColor}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+      />
     </motion.div>
   );
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { RefreshCw, ChevronLeft } from "lucide-react";
 import { ActiveScreen, Conversation, Message, KnowledgeDocument, UserAvatar } from "./types";
+import { SupportedLanguage } from "./locales";
 import OnboardingScreen from "./components/OnboardingScreen";
 import LoginScreen from "./components/LoginScreen";
 import DashboardScreen from "./components/DashboardScreen";
@@ -10,6 +11,10 @@ import ChatScreen from "./components/ChatScreen";
 import KnowledgeRepoScreen from "./components/KnowledgeRepoScreen";
 import MediaGeneratorScreen from "./components/MediaGeneratorScreen";
 import WorkspaceScreen from "./components/WorkspaceScreen";
+import ComplianceEngineScreen from "./components/ComplianceEngineScreen";
+import NeuralTrainingScreen from "./components/NeuralTrainingScreen";
+import KatanaVfxLoader from "./components/KatanaVfxLoader";
+import SleekConfirmModal from "./components/SleekConfirmModal";
 import NetworkStatusBar from "./components/NetworkStatusBar";
 import { initFirebase, auth, db } from "./firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -135,11 +140,56 @@ export default function App() {
   const [voiceOutput, setVoiceOutput] = useState(() => {
     return localStorage.getItem("jarvis_voice") !== "false";
   });
+  const [voicePersonality, setVoicePersonality] = useState<"jarvis" | "friday">(() => {
+    return (localStorage.getItem("jarvis_voice_personality") as "jarvis" | "friday") || "jarvis";
+  });
   const [appTheme, setAppTheme] = useState<"dark" | "light">(() => {
     return (localStorage.getItem("jarvis_theme") as "dark" | "light") || "dark";
   });
+  const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>(() => {
+    return (localStorage.getItem("jarvis_lang") as SupportedLanguage) || "en";
+  });
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [retryCountdown, setRetryCountdown] = useState<number | null>(null);
+
+  // Global Dynamic Confirmation Overlay State
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    themeColor?: "cyan" | "red" | "gold";
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  // Katana VFX Loading Screen States
+  const [showKatana, setShowKatana] = useState(true); // Plays initially on boot
+  const [katanaMessage, setKatanaMessage] = useState("DECRYPTING SECURE MATRIX");
+  const [pendingScreen, setPendingScreen] = useState<ActiveScreen | null>(null);
+
+  const navigateWithKatana = (screen: ActiveScreen, customMessage?: string) => {
+    setKatanaMessage(customMessage || "SYNCHRONIZING BANDWIDTH");
+    setPendingScreen(screen);
+    setShowKatana(true);
+  };
+
+  const handleNavigate = (screen: ActiveScreen) => {
+    let msg = "SYNCHRONIZING SECURE SYSTEMS";
+    if (screen === ActiveScreen.DASHBOARD) msg = "BOOTING JARVIS CORE MATRIX";
+    if (screen === ActiveScreen.WORKSPACE) msg = "ESTABLISHING GOOGLE COCKPIT";
+    if (screen === ActiveScreen.COMPLIANCE_ENGINE) msg = "ACTIVATING COMPLIANCE RUNTIME";
+    if (screen === ActiveScreen.CHAT) msg = "ENCRYPTING TERMINAL HOOKS";
+    if (screen === ActiveScreen.KNOWLEDGE_REPO) msg = "SYNAPSE MAPPING KNOWLEDGE BANK";
+    if (screen === ActiveScreen.MEDIA_GENERATOR) msg = "WAVELENGTH SYNTH OVERLAY CONFIG";
+    if (screen === ActiveScreen.LOGIN) msg = "REVOKING CLEARANCE CODES";
+    
+    navigateWithKatana(screen, msg);
+  };
 
   // Holographic back gesture system states (React state for visual render)
   const [showIndicator, setShowIndicator] = useState(false);
@@ -228,8 +278,16 @@ export default function App() {
   }, [voiceOutput]);
 
   useEffect(() => {
+    localStorage.setItem("jarvis_voice_personality", voicePersonality);
+  }, [voicePersonality]);
+
+  useEffect(() => {
     localStorage.setItem("jarvis_theme", appTheme);
   }, [appTheme]);
+
+  useEffect(() => {
+    localStorage.setItem("jarvis_lang", currentLanguage);
+  }, [currentLanguage]);
 
   useEffect(() => {
     initFirebase().then(({ auth }) => {
@@ -300,6 +358,28 @@ export default function App() {
   const handleSelectConversation = (id: string) => {
     setActiveConvoId(id);
     setActiveScreen(ActiveScreen.CHAT);
+  };
+
+  const handleDeleteConversation = (id: string) => {
+    setConversations(prev => prev.filter(c => c.id !== id));
+    if (activeConvoId === id) {
+      setActiveConvoId(conversations.find(c => c.id !== id)?.id || "");
+    }
+  };
+
+  const handleDeleteAllConversations = () => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "CRITICAL ALERT: COGNITIVE PURGE DIRECTIVE",
+      message: "WARNING: Direct access payload wipe initiated. You are about to execute a complete core purge of all active diagnostic histories and tactical conversation profiles. This action is terminal, absolutely irreversible, and will permanently sever JARVIS sync memory anchors.",
+      themeColor: "red",
+      confirmText: "CONFIRM PURGE",
+      onConfirm: () => {
+        setConversations([]);
+        setActiveConvoId("");
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
   // Switch to a new quick session
@@ -491,7 +571,11 @@ export default function App() {
 
   return (
     <div 
-      className={`bg-[#020205] h-[100dvh] flex items-center justify-center font-sans tracking-tight text-white overflow-hidden relative w-full ${appTheme === 'light' ? 'theme-light' : ''}`}
+      className={`h-[100dvh] flex items-center justify-center font-sans tracking-tight overflow-hidden relative w-full transition-colors duration-500 ${
+        appTheme === 'light' 
+          ? 'theme-light bg-slate-50 text-slate-900' 
+          : 'bg-[#020205] text-white'
+      }`}
     >
       <NetworkStatusBar />
       
@@ -526,19 +610,21 @@ export default function App() {
             {activeScreen === ActiveScreen.ONBOARDING && (
               <OnboardingScreen
                 key="onboard"
-                onGetStarted={() => setActiveScreen(ActiveScreen.LOGIN)}
+                onGetStarted={() => handleNavigate(ActiveScreen.LOGIN)}
               />
             )}
 
             {activeScreen === ActiveScreen.LOGIN && (
               <LoginScreen
                 key="login"
+                voicePersonality={voicePersonality}
+                onVoicePersonalityChange={setVoicePersonality}
                 onLoginSuccess={(operatorName, photoUrl) => {
                   setUserName(operatorName);
                   if (photoUrl) setUserPhoto(photoUrl);
-                  setActiveScreen(ActiveScreen.DASHBOARD);
+                  handleNavigate(ActiveScreen.DASHBOARD);
                 }}
-                onNavigate={setActiveScreen}
+                onNavigate={handleNavigate}
               />
             )}
 
@@ -552,24 +638,28 @@ export default function App() {
                 aiModel={aiModel}
                 appTheme={appTheme}
                 onThemeChange={setAppTheme}
+                currentLanguage={currentLanguage}
+                onLanguageChange={setCurrentLanguage}
                 voiceOutput={voiceOutput}
                 onAiModelChange={setAiModel}
                 onUserNameChange={setUserName}
                 onUserAvatarChange={handleUserAvatarChange}
                 onVoiceOutputChange={setVoiceOutput}
                 onSelectConversation={handleSelectConversation}
-                onNavigate={setActiveScreen}
+                onNavigate={handleNavigate}
                 onStartNewChat={handleStartNewChat}
                 onQuickAction={handleSimulateSpeechSubmit}
                 githubRepo={githubRepo}
                 onGithubRepoChange={setGithubRepo}
+                onDeleteConversation={handleDeleteConversation}
+                onDeleteAllConversations={handleDeleteAllConversations}
               />
             )}
 
           {activeScreen === ActiveScreen.VOICE && (
             <VoiceScreen
               key="voice"
-              onNavigate={setActiveScreen}
+              onNavigate={handleNavigate}
               onSimulateSpeechSubmit={handleSimulateSpeechSubmit}
             />
           )}
@@ -582,7 +672,8 @@ export default function App() {
               isThinking={isThinking}
               voiceOutput={voiceOutput}
               onVoiceOutputChange={setVoiceOutput}
-              onNavigate={setActiveScreen}
+              voicePersonality={voicePersonality}
+              onNavigate={handleNavigate}
               onSendMessage={handleSendMessage}
             />
           )}
@@ -592,21 +683,36 @@ export default function App() {
               documents={documents}
               onAddDocument={(doc) => setDocuments([...documents, doc])}
               onRemoveDocument={(id) => setDocuments(documents.filter(d => d.id !== id))}
-              onNavigate={setActiveScreen}
+              onClearDocuments={() => setDocuments([])}
+              onNavigate={handleNavigate}
             />
           )}
 
           {activeScreen === ActiveScreen.MEDIA_GENERATOR && (
             <MediaGeneratorScreen
               key="media_generator"
-              onBack={() => setActiveScreen(ActiveScreen.DASHBOARD)}
+              onBack={() => handleNavigate(ActiveScreen.DASHBOARD)}
             />
           )}
 
           {activeScreen === ActiveScreen.WORKSPACE && (
             <WorkspaceScreen
               key="workspace"
-              onNavigate={setActiveScreen}
+              onNavigate={handleNavigate}
+            />
+          )}
+
+          {activeScreen === ActiveScreen.COMPLIANCE_ENGINE && (
+            <ComplianceEngineScreen
+              key="compliance_engine"
+              onNavigate={handleNavigate}
+            />
+          )}
+
+          {activeScreen === ActiveScreen.NEURAL_TRAINING && (
+            <NeuralTrainingScreen
+              key="neural_training"
+              onNavigate={handleNavigate}
             />
           )}
         </AnimatePresence>
@@ -645,6 +751,34 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Katana VFX Loading Screen Overlay */}
+      <AnimatePresence>
+        {showKatana && (
+          <KatanaVfxLoader
+            key="katana-loader"
+            message={katanaMessage}
+            onComplete={() => {
+              setShowKatana(false);
+              if (pendingScreen) {
+                setActiveScreen(pendingScreen);
+                setPendingScreen(null);
+              }
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sleek Operational Confirmation Dialog (Anti-iframe-blocking) */}
+      <SleekConfirmModal
+        isOpen={confirmConfig.isOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        themeColor={confirmConfig.themeColor}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }
