@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JARVIS - Voice Commander</title>
+    <script>
+      // Suppress benign Vite WebSocket and HMR connection errors
+      const originalConsoleError = console.error;
+      const originalConsoleWarn = console.warn;
+
+      console.error = function(...args) {
+        if (args.length > 0) {
+          const firstArg = args[0];
+          const str = typeof firstArg === 'string' ? firstArg : (firstArg && firstArg.message) || String(firstArg);
+          if (str && (
+            str.includes('WebSocket') || 
+            str.includes('websocket') || 
+            str.includes('WebSocket closed') || 
+            str.includes('closed without opened') || 
+            str.includes('failed to connect to websocket') ||
+            str.includes('connection could not be established')
+          )) {
+            return;
+          }
+        }
+        originalConsoleError.apply(console, args);
+      };
+
+      console.warn = function(...args) {
+        if (args.length > 0) {
+          const firstArg = args[0];
+          const str = typeof firstArg === 'string' ? firstArg : (firstArg && firstArg.message) || String(firstArg);
+          if (str && (
+            str.includes('WebSocket') || 
+            str.includes('websocket') || 
+            str.includes('WebSocket closed') || 
+            str.includes('closed without opened') || 
+            str.includes('failed to connect to websocket')
+          )) {
+            return;
+          }
+        }
+        originalConsoleWarn.apply(console, args);
+      };
+
+      // Safeguard against unhandled promise rejections triggering overlay or error notifications
+      window.addEventListener('unhandledrejection', function(event) {
+        const reason = event.reason;
+        if (!reason) return;
+        
+        let msg = '';
+        if (typeof reason === 'string') {
+          msg = reason;
+        } else if (reason instanceof Error) {
+          msg = reason.message + ' ' + reason.stack;
+        } else {
+          try {
+            msg = reason.message || JSON.stringify(reason) || String(reason);
+          } catch(e) {
+            msg = String(reason);
+          }
+        }
+
+        if (msg && (
+          msg.includes('WebSocket') || 
+          msg.includes('websocket') || 
+          msg.includes('socket') || 
+          msg.includes('ws://') || 
+          msg.includes('wss://') || 
+          msg.includes('closed without opened') || 
+          msg.includes('closed before connection')
+        )) {
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+        }
+      }, true);
+
+      // Safeguard against global resource or script errors from WebSocket
+      window.addEventListener('error', function(event) {
+        const msg = event.message || '';
+        const error = event.error;
+        let detail = msg;
+        if (error) {
+          detail += ' ' + (error.message || String(error));
+        }
+        if (detail && (
+          detail.includes('WebSocket') || 
+          detail.includes('websocket') || 
+          detail.includes('socket') || 
+          detail.includes('ws://') || 
+          detail.includes('wss://') || 
+          detail.includes('closed without opened') || 
+          detail.includes('closed before connection')
+        )) {
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+        }
+      }, true);
+
+      // Wrapper to prevent Vite HMR WebSocket client errors entirely
+      if (typeof window.WebSocket !== 'undefined') {
+        const OriginalWebSocket = window.WebSocket;
+        const SafeWebSocket = function(url, protocols) {
+          const ws = new OriginalWebSocket(url, protocols);
+          
+          ws.addEventListener('error', function(e) {
+            if (url.includes('ais-dev') || url.includes('localhost') || url.includes('127.0.0.1')) {
+              if (e.preventDefault) e.preventDefault();
+              if (e.stopPropagation) e.stopPropagation();
+              if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+            }
+          }, { capture: true });
+
+          let originalOnError = null;
+          Object.defineProperty(ws, 'onerror', {
+            get: function() {
+              return originalOnError;
+            },
+            set: function(fn) {
+              originalOnError = fn;
+              ws.addEventListener('error', function(e) {
+                if (url.includes('ais-dev') || url.includes('localhost') || url.includes('127.0.0.1')) {
+                  if (e.preventDefault) e.preventDefault();
+                  if (e.stopPropagation) e.stopPropagation();
+                  if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+                }
+                if (fn) {
+                  try {
+                    fn.apply(ws, arguments);
+                  } catch(err) {
+                    // Suppressed
+                  }
+                }
+              });
+            }
+          });
+          
+          return ws;
+        };
+        SafeWebSocket.prototype = OriginalWebSocket.prototype;
+        for (const prop in OriginalWebSocket) {
+          if (Object.prototype.hasOwnProperty.call(OriginalWebSocket, prop)) {
+            SafeWebSocket[prop] = OriginalWebSocket[prop];
+          }
+        }
+        window.WebSocket = SafeWebSocket;
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

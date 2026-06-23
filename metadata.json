@@ -1,0 +1,10 @@
+{
+  "name": "JARVIS AI Command Hub",
+  "description": "A premium AI assistant trained by a full stack of cutting-edge AI models, featuring conversational voice control and vast knowledge capabilities.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

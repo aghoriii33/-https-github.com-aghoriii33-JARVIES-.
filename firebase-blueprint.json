@@ -1,0 +1,22 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user in the system.",
+      "type": "object",
+      "properties": {
+        "conversations": {
+          "type": "array",
+          "items": { "type": "object" },
+          "description": "User's conversations"
+        }
+      }
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User settings and conversations"
+    }
+  }
+}
