@@ -24,7 +24,7 @@ import {
   User
 } from "lucide-react";
 import { ActiveScreen } from "../types";
-import { getAccessToken, signInWithGoogle } from "../firebase";
+import { getAccessToken, connectWorkspaceWithGoogle } from "../firebase";
 import SleekConfirmModal from "./SleekConfirmModal";
 
 interface WorkspaceScreenProps {
@@ -117,7 +117,7 @@ export default function WorkspaceScreen({ onNavigate }: WorkspaceScreenProps) {
   // LOGIN FLOW GOOGLE
   const handleConnect = async () => {
     try {
-      await signInWithGoogle();
+      await connectWorkspaceWithGoogle();
       const token = getAccessToken();
       if (token) {
         setAuthToken(token);

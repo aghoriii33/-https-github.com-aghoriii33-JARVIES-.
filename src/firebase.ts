@@ -48,6 +48,13 @@ export const initFirebase = async () => {
 export const signInWithGoogle = async () => {
   const { auth } = await initFirebase();
   const provider = new GoogleAuthProvider();
+  const result = await signInWithPopup(auth, provider);
+  return result;
+};
+
+export const connectWorkspaceWithGoogle = async () => {
+  const { auth } = await initFirebase();
+  const provider = new GoogleAuthProvider();
   
   // Gmail scopes
   provider.addScope('https://mail.google.com/');
