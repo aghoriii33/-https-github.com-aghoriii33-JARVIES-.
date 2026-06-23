@@ -30,7 +30,7 @@ export default function MediaGeneratorScreen({ onBack }: MediaGeneratorScreenPro
   const [prompt, setPrompt] = useState("");
   const [mode, setMode] = useState<"video" | "image">("video");
   const [model, setModel] = useState("veo-3.1-lite-generate-preview");
-  const [resolution, setResolution] = useState("1085p");
+  const [resolution, setResolution] = useState("1080p");
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);

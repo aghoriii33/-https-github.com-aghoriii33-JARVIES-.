@@ -136,7 +136,7 @@ export default function App() {
   const [userName, setUserName] = useState("Tony Stark");
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const [userAvatar, setUserAvatar] = useState<UserAvatar | null>(null);
-  const [aiModel, setAiModel] = useState("gemini-3.5-flash");
+  const [aiModel, setAiModel] = useState("gemini-2.0-flash-exp");
   const [voiceOutput, setVoiceOutput] = useState(() => {
     return localStorage.getItem("jarvis_voice") !== "false";
   });
@@ -145,6 +145,10 @@ export default function App() {
   });
   const [appTheme, setAppTheme] = useState<"dark" | "light">(() => {
     return (localStorage.getItem("jarvis_theme") as "dark" | "light") || "dark";
+  });
+  const [persona, setPersona] = useState(() => {
+    const saved = localStorage.getItem("jarvis_persona");
+    return saved ? JSON.parse(saved) : { humor: 50, formality: 50, directness: 50 };
   });
   const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>(() => {
     return (localStorage.getItem("jarvis_lang") as SupportedLanguage) || "en";
@@ -297,6 +301,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("jarvis_lang", currentLanguage);
   }, [currentLanguage]);
+
+  useEffect(() => {
+    localStorage.setItem("jarvis_persona", JSON.stringify(persona));
+  }, [persona]);
 
   useEffect(() => {
     initFirebase().then(({ auth }) => {
@@ -464,8 +472,9 @@ export default function App() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               message: rawText,
-              model: aiModel,
+              model: "gemini-3.5-flash",
               documents: documents,
+              persona: persona,
               history: activeConversation.messages.map((m) => ({
                 role: (m.sender === "JARVIS") ? "model" : "user",
                 text: m.text
@@ -522,7 +531,10 @@ export default function App() {
         metrics: {
           thermalLoad: result.thermalLoad || "Normal",
           successProb: result.successProb || "95.0%",
-          actionRecommended: result.actionRecommended || "Systems stable."
+          actionRecommended: result.actionRecommended || "Systems stable.",
+          detectedEmotion: result.detectedEmotion || "Neutral",
+          physicalMotionSimulation: result.physicalMotionSimulation || "Maintains a calm, neutral posture.",
+          verifiedSource: result.verifiedSource
         }
       };
 
@@ -550,7 +562,9 @@ export default function App() {
         metrics: {
           thermalLoad: "Critical",
           successProb: "12.0%",
-          actionRecommended: "Resolve API connection issues."
+          actionRecommended: "Resolve API connection issues.",
+          detectedEmotion: "Concerned",
+          physicalMotionSimulation: "Blinks rapidly, eyes darting to check system status."
         }
       };
 
@@ -649,6 +663,8 @@ export default function App() {
                 onThemeChange={setAppTheme}
                 currentLanguage={currentLanguage}
                 onLanguageChange={setCurrentLanguage}
+                persona={persona}
+                onPersonaChange={setPersona}
                 voiceOutput={voiceOutput}
                 onAiModelChange={setAiModel}
                 onUserNameChange={setUserName}

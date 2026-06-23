@@ -15,6 +15,9 @@ export interface SystemMetrics {
   thermalLoad: string;
   successProb: string;
   actionRecommended: string;
+  detectedEmotion?: string;
+  physicalMotionSimulation?: string;
+  verifiedSource?: string;
 }
 
 export interface Message {

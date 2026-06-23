@@ -111,7 +111,7 @@ export default function ComplianceEngineScreen({ onNavigate }: ComplianceEngineS
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="flex-1 flex flex-col items-center p-4 bg-zinc-950 min-h-screen text-gray-200"
+      className={`flex-1 flex flex-col items-center p-4 bg-zinc-950 min-h-screen text-gray-200 ${isThinking ? 'animate-jarvis-glitch' : ''}`}
     >
       {/* Header */}
       <div className="w-full max-w-4xl flex items-center justify-between mb-8 pb-4 border-b border-white/10 mt-safe pt-4">

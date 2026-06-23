@@ -38,6 +38,8 @@ interface DashboardScreenProps {
   onThemeChange: (theme: "dark" | "light") => void;
   currentLanguage: SupportedLanguage;
   onLanguageChange: (lang: SupportedLanguage) => void;
+  persona: { humor: number; formality: number; directness: number };
+  onPersonaChange: (p: { humor: number; formality: number; directness: number }) => void;
   voiceOutput: boolean;
   onUserNameChange: (name: string) => void;
   onUserAvatarChange: (avatar: UserAvatar) => void;
@@ -64,6 +66,8 @@ export default function DashboardScreen({
   onThemeChange,
   currentLanguage,
   onLanguageChange,
+  persona,
+  onPersonaChange,
   voiceOutput,
   onUserNameChange,
   onUserAvatarChange,
@@ -649,27 +653,58 @@ export default function DashboardScreen({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[11px] uppercase font-mono text-gray-500">NEURAL CORE MODEL</label>
-                <div className="flex gap-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-[11px] uppercase font-mono text-gray-500">NEURAL CORE MODEL</label>
+                  <span className="text-[9px] font-mono text-cyan-400/60 uppercase tracking-widest">Active Matrix</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
                   <button
-                    onClick={() => onAiModelChange("gemini-3.5-flash")}
-                    className={`flex-1 py-2 px-3 rounded-lg border text-xs font-mono transition-all ${
-                      aiModel === "gemini-3.5-flash"
-                        ? "bg-cyan-950/60 border-cyan-400 text-cyan-400"
-                        : "bg-zinc-900 border-white/10 text-gray-400 hover:border-cyan-400/40"
+                    onClick={() => onAiModelChange("gemini-3.1-flash-lite")}
+                    className={`py-2 px-1 text-center rounded-lg border text-[11px] font-mono transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
+                      aiModel === "gemini-3.1-flash-lite"
+                        ? "bg-emerald-950/40 border-emerald-500 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
+                        : "bg-zinc-900 border-white/10 text-gray-400 hover:border-emerald-500/45 hover:text-emerald-300"
                     }`}
+                    title="Gemini 3.1 Flash Lite: Ultra low latency fallback, optimized speed."
                   >
-                    Flash (Speed)
+                    <span className="font-bold">3.1 Lite</span>
+                    <span className="text-[8px] opacity-60 font-medium">Ultra Speed</span>
                   </button>
                   <button
-                    onClick={() => onAiModelChange("gemini-3.5-pro")}
-                    className={`flex-1 py-2 px-3 rounded-lg border text-xs font-mono transition-all ${
-                      aiModel === "gemini-3.5-pro"
-                        ? "bg-purple-950/60 border-purple-400 text-purple-400"
-                        : "bg-zinc-900 border-white/10 text-gray-400 hover:border-purple-400/40"
+                    onClick={() => onAiModelChange("gemini-3.5-flash")}
+                    className={`py-2 px-1 text-center rounded-lg border text-[11px] font-mono transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
+                      aiModel === "gemini-3.5-flash"
+                        ? "bg-cyan-950/40 border-cyan-500 text-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.2)]"
+                        : "bg-zinc-900 border-white/10 text-gray-400 hover:border-cyan-500/45 hover:text-cyan-300"
                     }`}
+                    title="Gemini 3.5 Flash: Highly balanced, exceptionally fast, general reasoning."
                   >
-                    Pro (Reasoning)
+                    <span className="font-bold">3.5 Flash</span>
+                    <span className="text-[8px] opacity-60 font-medium">Balanced</span>
+                  </button>
+                  <button
+                    onClick={() => onAiModelChange("gemini-2.0-flash-exp")}
+                    className={`py-2 px-1 text-center rounded-lg border text-[11px] font-mono transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
+                      aiModel === "gemini-2.0-flash-exp"
+                        ? "bg-amber-950/40 border-amber-500 text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+                        : "bg-zinc-900 border-white/10 text-gray-400 hover:border-amber-500/45 hover:text-amber-300"
+                    }`}
+                    title="Gemini 2.0 Flash Exp: Highly powerful experimental model with advanced reasoning."
+                  >
+                    <span className="font-bold">2.0 Flash Exp</span>
+                    <span className="text-[8px] opacity-60 font-medium">Advanced</span>
+                  </button>
+                  <button
+                    onClick={() => onAiModelChange("gemini-3.1-pro-preview")}
+                    className={`py-2 px-1 text-center rounded-lg border text-[11px] font-mono transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
+                      aiModel === "gemini-3.1-pro-preview" || aiModel === "gemini-3.5-pro"
+                        ? "bg-purple-950/40 border-purple-500 text-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.2)]"
+                        : "bg-zinc-900 border-white/10 text-gray-400 hover:border-purple-500/45 hover:text-purple-300"
+                    }`}
+                    title="Gemini 3.1 Pro: Deep reasoning, logic verification, compliance check schemas."
+                  >
+                    <span className="font-bold">3.1 Pro</span>
+                    <span className="text-[8px] opacity-60 font-medium">Deep Logic</span>
                   </button>
                 </div>
               </div>
@@ -735,6 +770,49 @@ export default function DashboardScreen({
                   >
                     <Github className="w-4 h-4" />
                   </a>
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-4 border-t border-white/5">
+                <label className="text-[11px] uppercase font-mono text-cyan-500 font-semibold tracking-wider">Persona Tuning</label>
+                
+                <div className="space-y-2 cursor-pointer">
+                  <div className="flex justify-between text-[10px] font-mono text-gray-400">
+                    <span>Humor Level</span>
+                    <span className="text-cyan-400">{persona.humor}%</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max="100" 
+                    value={persona.humor}
+                    onChange={(e) => onPersonaChange({...persona, humor: parseInt(e.target.value)})}
+                    className="w-full accent-cyan-400 cursor-pointer"
+                  />
+                </div>
+
+                <div className="space-y-2 cursor-pointer">
+                  <div className="flex justify-between text-[10px] font-mono text-gray-400">
+                    <span>Formality</span>
+                    <span className="text-cyan-400">{persona.formality}%</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max="100" 
+                    value={persona.formality}
+                    onChange={(e) => onPersonaChange({...persona, formality: parseInt(e.target.value)})}
+                    className="w-full accent-cyan-400 cursor-pointer"
+                  />
+                </div>
+
+                <div className="space-y-2 cursor-pointer">
+                  <div className="flex justify-between text-[10px] font-mono text-gray-400">
+                    <span>Directness</span>
+                    <span className="text-cyan-400">{persona.directness}%</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max="100" 
+                    value={persona.directness}
+                    onChange={(e) => onPersonaChange({...persona, directness: parseInt(e.target.value)})}
+                    className="w-full accent-cyan-400 cursor-pointer"
+                  />
                 </div>
               </div>
 

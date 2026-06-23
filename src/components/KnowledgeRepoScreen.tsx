@@ -14,7 +14,12 @@ import {
   ChevronRight,
   ExternalLink,
   Sparkles,
-  Database
+  Database,
+  ShieldCheck,
+  Globe,
+  Wifi,
+  CornerDownRight,
+  Info
 } from "lucide-react";
 import { ActiveScreen, KnowledgeDocument } from "../types";
 import { getAccessToken, signInWithGoogle } from "../firebase";
@@ -36,7 +41,7 @@ export default function KnowledgeRepoScreen({
   onNavigate
 }: KnowledgeRepoScreenProps) {
   // Navigation & General tabs
-  const [tab, setTab] = useState<"local" | "drive">("local");
+  const [tab, setTab] = useState<"local" | "drive" | "sources">("local");
 
   // Local Schema Creation
   const [isAdding, setIsAdding] = useState(false);
@@ -418,6 +423,13 @@ export default function KnowledgeRepoScreen({
           Core Memories
         </button>
         <button
+          onClick={() => setTab("sources")}
+          className={`flex-1 py-3 text-xs font-mono font-bold tracking-widest uppercase transition-all flex items-center justify-center gap-2 ${tab === "sources" ? "text-cyan-400 border-b-2 border-cyan-400 bg-cyan-950/20" : "text-gray-500 hover:text-white hover:bg-white/5"}`}
+        >
+          <ShieldCheck className="w-3.5 h-3.5" />
+          Verification Core
+        </button>
+        <button
           onClick={() => setTab("drive")}
           className={`flex-1 py-3 text-xs font-mono font-bold tracking-widest uppercase transition-all flex items-center justify-center gap-2 ${tab === "drive" ? "text-cyan-400 border-b-2 border-cyan-400 bg-cyan-950/20" : "text-gray-500 hover:text-white hover:bg-white/5"}`}
         >
@@ -749,6 +761,201 @@ export default function KnowledgeRepoScreen({
                 </div>
               )}
             </>
+          )}
+
+          {/* TAB 3: TRUSTED MULTI-SOURCE VERIFICATION LAYER */}
+          {tab === "sources" && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              {/* Uplink Telemetry Status Card */}
+              <div className="p-5 bg-zinc-950 border border-cyan-400/20 rounded-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-950/15 blur-3xl pointer-events-none" />
+                <div className="flex flex-wrap sm:flex-nowrap justify-between items-start gap-4">
+                  <div className="space-y-2">
+                    <span className="px-2 py-0.5 bg-cyan-950/40 text-cyan-400 border border-cyan-500/20 text-[9px] font-mono uppercase tracking-widest font-semibold rounded-full inline-flex items-center gap-1">
+                      <Wifi className="w-3 h-3 animate-pulse text-cyan-400" />
+                      Satellite Link Active
+                    </span>
+                    <h3 className="text-base font-bold font-mono text-white tracking-widest uppercase">
+                      GROUND GROUNDING SYSTEM UPLINK
+                    </h3>
+                    <p className="text-xs text-gray-400 leading-relaxed max-w-xl font-sans font-light">
+                      JARVIS is plugged directly into high-fidelity news portals, knowledge databases, and orbital telemetry engines. Search tools are dynamically bound to Gemini-2.0-Flash-Exp for live information extraction.
+                    </p>
+                  </div>
+                  
+                  {/* Digital Meter */}
+                  <div className="p-4 bg-zinc-900/60 rounded-xl border border-white/5 font-mono text-[10px] space-y-1.5 shrink-0 w-full sm:w-auto">
+                    <p className="flex justify-between gap-6 text-gray-500">Latency: <span className="text-cyan-400 font-bold">42 ms</span></p>
+                    <p className="flex justify-between gap-6 text-gray-500">Port link: <span className="text-cyan-400">Dynamic</span></p>
+                    <p className="flex justify-between gap-6 text-gray-500">Search model: <span className="text-yellow-500 font-bold">2.0-Flash-Exp</span></p>
+                    <p className="flex justify-between gap-6 text-gray-500">Retrieval: <span className="text-emerald-400 font-bold">RAG Mode</span></p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Trusted Knowledge Sources Section */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-cyan-400" />
+                  <h4 className="text-xs font-mono font-bold uppercase tracking-widest text-cyan-400">
+                    Trusted Knowledge Sources
+                  </h4>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Source 1: Wikiquote */}
+                  <div className="p-4 bg-zinc-950/40 border border-white/5 rounded-xl hover:border-cyan-400/20 transition-all flex flex-col justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-mono font-bold text-white uppercase">Wikiquote Main Page</span>
+                        <span className="text-[9px] font-mono text-gray-600 uppercase">Quotes & Sayings</span>
+                      </div>
+                      <p className="text-xs text-gray-400 leading-relaxed font-sans font-light">
+                        Historical attributions, famous proverbs, verified sayings, and contextual literary fragments checked via a multi-language attribution corpus.
+                      </p>
+                    </div>
+                    <a
+                      href="https://en.wikiquote.org/wiki/Main_Page"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-850 text-gray-300 hover:text-cyan-400 rounded-lg text-xs font-mono font-bold flex items-center justify-between transition-colors border border-white/5 w-full cursor-pointer"
+                    >
+                      <span>en.wikiquote.org</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+
+                  {/* Source 2: Reuters */}
+                  <div className="p-4 bg-zinc-950/40 border border-white/5 rounded-xl hover:border-cyan-400/20 transition-all flex flex-col justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-mono font-bold text-white uppercase">Reuters</span>
+                        <span className="text-[9px] font-mono text-gray-600 uppercase">Global Wire Feed</span>
+                      </div>
+                      <p className="text-xs text-gray-400 leading-relaxed font-sans font-light">
+                        Real-time planetary affairs, legal adjustments, macroeconomic news streams, international treaties, and high-frequency factual global events.
+                      </p>
+                    </div>
+                    <a
+                      href="https://www.reuters.com/?utm_source=chatgpt.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-850 text-gray-300 hover:text-cyan-400 rounded-lg text-xs font-mono font-bold flex items-center justify-between transition-colors border border-white/5 w-full cursor-pointer"
+                    >
+                      <span>reuters.com</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+
+                  {/* Source 3: NASA */}
+                  <div className="p-4 bg-zinc-950/40 border border-white/5 rounded-xl hover:border-cyan-400/20 transition-all flex flex-col justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-mono font-bold text-white uppercase">NASA Ground Station</span>
+                        <span className="text-[9px] font-mono text-gray-600 uppercase">Space Explorations</span>
+                      </div>
+                      <p className="text-xs text-gray-400 leading-relaxed font-sans font-light">
+                        Deep-space astrophysic operations, Perseverance rover telemetry coordinates, Artemis flight parameters, and rocket propulsion mission status values.
+                      </p>
+                    </div>
+                    <a
+                      href="https://www.nasa.gov/?utm_source=chatgpt.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-850 text-gray-300 hover:text-cyan-400 rounded-lg text-xs font-mono font-bold flex items-center justify-between transition-colors border border-white/5 w-full cursor-pointer"
+                    >
+                      <span>nasa.gov</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+
+                  {/* Source 4: ESA */}
+                  <div className="p-4 bg-zinc-950/40 border border-white/5 rounded-xl hover:border-cyan-400/20 transition-all flex flex-col justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-mono font-bold text-white uppercase">ESA Operations</span>
+                        <span className="text-[9px] font-mono text-gray-600 uppercase">Cosmos Telemetry</span>
+                      </div>
+                      <p className="text-xs text-gray-400 leading-relaxed font-sans font-light">
+                        European space exploration frameworks, spacecraft sensor readouts, Jovian exploration parameters, and international orbit synchronization schedules.
+                      </p>
+                    </div>
+                    <a
+                      href="https://www.esa.int/?utm_source=chatgpt.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-850 text-gray-300 hover:text-cyan-400 rounded-lg text-xs font-mono font-bold flex items-center justify-between transition-colors border border-white/5 w-full cursor-pointer"
+                    >
+                      <span>esa.int</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Verification & RAG Engine Protocol Stack */}
+              <div className="p-5 bg-zinc-900/30 border border-white/5 rounded-2xl space-y-4">
+                <div className="flex items-center gap-2">
+                  <Database className="w-4 h-4 text-emerald-400" />
+                  <h4 className="text-xs font-mono font-bold uppercase tracking-widest text-white">
+                    Verification Rule Configuration
+                  </h4>
+                </div>
+                
+                <div className="divide-y divide-white/5 font-mono text-xs">
+                  <div className="py-2.5 flex justify-between items-center">
+                    <span className="flex items-center gap-2 text-gray-400">
+                      <CornerDownRight className="w-3.5 h-3.5 text-cyan-400/50" />
+                      Multi-Source Cross Reference Engine
+                    </span>
+                    <span className="px-2 py-0.5 bg-emerald-950/50 text-emerald-400 text-[9px] border border-emerald-500/20 rounded font-bold">
+                      ENABLED (HARDWARE ENFORCED)
+                    </span>
+                  </div>
+
+                  <div className="py-2.5 flex justify-between items-center">
+                    <span className="flex items-center gap-2 text-gray-400">
+                      <CornerDownRight className="w-3.5 h-3.5 text-cyan-400/50" />
+                      Dynamic Contradiction & Bias Filter
+                    </span>
+                    <span className="px-2 py-0.5 bg-emerald-950/50 text-emerald-400 text-[9px] border border-emerald-500/20 rounded font-bold">
+                      ENABLED (AUTO-TUNED)
+                    </span>
+                  </div>
+
+                  <div className="py-2.5 flex justify-between items-center">
+                    <span className="flex items-center gap-2 text-gray-400">
+                      <CornerDownRight className="w-3.5 h-3.5 text-cyan-400/50" />
+                      Citations & Web Attributions Index mapping
+                    </span>
+                    <span className="px-2 py-0.5 bg-emerald-950/50 text-emerald-400 text-[9px] border border-emerald-500/20 rounded font-bold">
+                      APPEND CONSOLE MODE
+                    </span>
+                  </div>
+
+                  <div className="py-2.5 flex justify-between items-center">
+                    <span className="flex items-center gap-2 text-gray-400">
+                      <CornerDownRight className="w-3.5 h-3.5 text-cyan-400/50" />
+                      Offline Heuristic Backup Sandbox Mode
+                    </span>
+                    <span className="px-2 py-0.5 bg-emerald-950/50 text-emerald-400 text-[9px] border border-emerald-500/20 rounded font-bold">
+                      READY (AUTO-ROLLOVER)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-amber-950/20 border border-amber-500/15 rounded-xl flex gap-2 items-start mt-2">
+                  <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <p className="text-[11px] leading-relaxed text-amber-200/80 font-sans">
+                    <strong>Integrity Warning</strong>: If validation channels fail to return a verified factual proof within the maximum token thinking threshold, JARVIS will output a fail-safe offline fallback warning and cite existing non-outdated records representing training boundaries.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
           )}
 
         </div>

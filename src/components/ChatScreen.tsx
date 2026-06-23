@@ -13,10 +13,17 @@ import {
   Bot,
   Download,
   Volume2,
-  VolumeX
+  VolumeX,
+  Smile,
+  Frown,
+  Meh,
+  Heart,
+  Brain,
+  Activity
 } from "lucide-react";
 import { Message, ActiveScreen, SystemMetrics } from "../types";
 import HologramOverlay from "./HologramOverlay";
+import { KnowledgeVerificationBadge } from "./KnowledgeVerificationBadge";
 import ExportMenu from "./ExportMenu";
 import { soundEngine } from "../lib/sound-engine";
 
@@ -31,6 +38,27 @@ interface ChatScreenProps {
   voicePersonality?: "jarvis" | "friday";
   key?: string;
 }
+
+const getEmotionIcon = (emotionString: string | undefined, className: string) => {
+  if (!emotionString) return null;
+  const mood = emotionString.toLowerCase();
+  if (mood.includes("happy") || mood.includes("smile") || mood.includes("joy") || mood.includes("laugh") || mood.includes("excited")) {
+    return <Smile className={className} />;
+  }
+  if (mood.includes("sad") || mood.includes("cry") || mood.includes("fear") || mood.includes("lonely")) {
+    return <Frown className={className} />;
+  }
+  if (mood.includes("angry") || mood.includes("frustrated") || mood.includes("stress") || mood.includes("annoy")) {
+    return <Meh className={className} />;
+  }
+  if (mood.includes("love") || mood.includes("affection") || mood.includes("care")) {
+    return <Heart className={className} />;
+  }
+  if (mood.includes("think") || mood.includes("curious") || mood.includes("confus")) {
+    return <Brain className={className} />;
+  }
+  return <Activity className={className} />;
+};
 
 export default function ChatScreen({
   onNavigate,
@@ -165,7 +193,7 @@ export default function ChatScreen({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 50 }}
       transition={{ duration: 0.35 }}
-      className="relative h-full flex flex-col justify-between bg-black text-[#e2e2e2] px-4 py-4 overflow-hidden"
+      className={`relative h-full flex flex-col justify-between bg-black text-[#e2e2e2] px-4 py-4 overflow-hidden ${isThinking ? 'animate-jarvis-glitch' : ''}`}
     >
       {/* Structural background highlights mimicking terminal interfaces */}
       <div className="absolute inset-x-0 bottom-0 top-2/3 bg-gradient-to-t from-cyan-950/5 via-transparent to-transparent pointer-events-none" />
@@ -237,8 +265,13 @@ export default function ChatScreen({
       {/* Messages Scroll View Container */}
       <div className="flex-1 overflow-y-auto no-scrollbar space-y-6 py-6 px-1 max-w-2xl mx-auto w-full">
         <AnimatePresence initial={false}>
-          {messages.map((msg) => {
+          {messages.map((msg, index) => {
             const isJARVIS = msg.sender === "JARVIS";
+            const emotion = isJARVIS 
+              ? msg.metrics?.detectedEmotion 
+              : messages[index + 1]?.sender === "JARVIS" 
+                ? messages[index + 1]?.metrics?.detectedEmotion 
+                : undefined;
 
             return (
               <motion.div
@@ -255,8 +288,13 @@ export default function ChatScreen({
                 <div className="flex items-center gap-2 px-1">
                   {isJARVIS ? (
                     <>
-                      <span className="font-mono text-[10px] text-cyan-400 uppercase tracking-widest font-semibold">
+                      <span className="font-mono text-[10px] text-cyan-400 uppercase tracking-widest font-semibold flex items-center gap-1.5">
                         {msg.senderName}
+                        {emotion && (
+                          <span title={emotion} className="opacity-80">
+                            {getEmotionIcon(emotion, "w-3 h-3")}
+                          </span>
+                        )}
                       </span>
                       <span className="text-[9px] text-gray-600 font-mono">{msg.timestamp}</span>
                       <button 
@@ -270,7 +308,12 @@ export default function ChatScreen({
                   ) : (
                     <>
                       <span className="text-[9px] text-gray-600 font-mono">{msg.timestamp}</span>
-                      <span className="font-mono text-[10px] text-pink-400 uppercase tracking-widest font-semibold">
+                      <span className="font-mono text-[10px] text-pink-400 uppercase tracking-widest font-semibold flex items-center gap-1.5">
+                        {emotion && (
+                          <span title={emotion} className="opacity-80">
+                            {getEmotionIcon(emotion, "w-3 h-3")}
+                          </span>
+                        )}
                         {msg.senderName}
                       </span>
                     </>
@@ -313,6 +356,29 @@ export default function ChatScreen({
                             {msg.metrics.successProb}
                           </span>
                         </div>
+                        {msg.metrics.detectedEmotion && (
+                          <div className="col-span-2 bg-pink-900/20 rounded-xl p-3 border border-pink-500/10 flex items-center justify-between">
+                            <span className="block text-[9px] uppercase font-mono tracking-widest text-pink-400/80">
+                              Detected User Emotion
+                            </span>
+                            <span className="text-pink-400 font-bold font-mono text-xs text-right truncate">
+                              {msg.metrics.detectedEmotion}
+                            </span>
+                          </div>
+                        )}
+                        {msg.metrics.physicalMotionSimulation && (
+                          <div className="col-span-2 bg-blue-900/20 rounded-xl p-3 border border-blue-500/10">
+                            <span className="block text-[9px] uppercase font-mono tracking-widest text-blue-400/80 mb-1">
+                              Simulated Biometrics & Motion Model
+                            </span>
+                            <span className="text-blue-300 font-mono text-xs italic tracking-tight opacity-90 leading-snug">
+                              [{msg.metrics.physicalMotionSimulation}]
+                            </span>
+                          </div>
+                        )}
+                        {msg.metrics.verifiedSource && (
+                          <KnowledgeVerificationBadge sourceName={msg.metrics.verifiedSource} />
+                        )}
                       </div>
 
                       {/* Diagnostic Action Recommendation overlay */}
@@ -350,7 +416,7 @@ export default function ChatScreen({
                 </span>
                 <span className="text-[10px] font-mono text-gray-600 animate-pulse">Calculating...</span>
               </div>
-              <div className="p-4 bg-zinc-900/30 border border-white/5 rounded-2xl rounded-tl-none flex items-center gap-2">
+              <div className="p-4 bg-zinc-950/80 border rounded-2xl rounded-tl-none flex items-center gap-2 animate-jarvis-pulse animate-jarvis-glitch">
                 <div className="flex gap-1 items-center py-1">
                   <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
                   <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
