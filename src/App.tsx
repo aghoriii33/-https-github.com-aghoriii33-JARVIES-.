@@ -265,6 +265,15 @@ export default function App() {
     if (!saved || saved.trim() === "" || saved === "https://github.com/aghoriii33") {
       return "https://github.com/aghoriii33/JARVIES-";
     }
+    // Prevent malicious or typo-squatted URLs
+    try {
+      const url = new URL(saved);
+      if (url.hostname !== "github.com") {
+        return "https://github.com/aghoriii33/JARVIES-";
+      }
+    } catch {
+      return "https://github.com/aghoriii33/JARVIES-";
+    }
     return saved;
   });
 

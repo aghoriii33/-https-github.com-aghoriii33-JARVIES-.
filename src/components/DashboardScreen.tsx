@@ -149,7 +149,7 @@ export default function DashboardScreen({
           <NeuralHealthIndicator appTheme={appTheme} />
 
           <a
-            href={githubRepo}
+            href={(githubRepo && githubRepo.startsWith('https://github.com/')) ? githubRepo : 'https://github.com/aghoriii33/JARVIES-'}
             target="_blank"
             rel="noopener noreferrer"
             title="Access Synced Repository"
@@ -728,7 +728,7 @@ export default function DashboardScreen({
                     placeholder="https://github.com/username/project"
                   />
                   <a
-                    href={githubRepo}
+                    href={(githubRepo && githubRepo.startsWith('https://github.com/')) ? githubRepo : 'https://github.com/aghoriii33/JARVIES-'}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-3 py-2.5 hover:bg-zinc-850 bg-zinc-900 border border-white/10 hover:border-cyan-400/40 text-cyan-400 rounded-xl flex items-center justify-center transition-all"
