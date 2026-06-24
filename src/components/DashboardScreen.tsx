@@ -84,6 +84,14 @@ export default function DashboardScreen({
 }: DashboardScreenProps) {
   const [selectedTab, setSelectedTab] = useState<"all" | "saved" | "files" | "models">("all");
   const [showSettings, setShowSettings] = useState(false);
+  const [customKeyInput, setCustomKeyInput] = useState(() => {
+    return localStorage.getItem("jarvis_gemini_api_key") || "";
+  });
+
+  const handleSaveCustomKey = (val: string) => {
+    setCustomKeyInput(val);
+    localStorage.setItem("jarvis_gemini_api_key", val.trim());
+  };
 
   const t = translations[currentLanguage] || translations.en;
 
@@ -671,15 +679,15 @@ export default function DashboardScreen({
                     <span className="text-[8px] opacity-60 font-medium">Ultra Speed</span>
                   </button>
                   <button
-                    onClick={() => onAiModelChange("gemini-3.5-flash")}
+                    onClick={() => onAiModelChange("gemini-2.5-flash")}
                     className={`py-2 px-1 text-center rounded-lg border text-[11px] font-mono transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
-                      aiModel === "gemini-3.5-flash"
+                      aiModel === "gemini-2.5-flash"
                         ? "bg-cyan-950/40 border-cyan-500 text-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.2)]"
                         : "bg-zinc-900 border-white/10 text-gray-400 hover:border-cyan-500/45 hover:text-cyan-300"
                     }`}
-                    title="Gemini 3.5 Flash: Highly balanced, exceptionally fast, general reasoning."
+                    title="Gemini 2.5 Flash: Highly balanced, exceptionally fast, general reasoning."
                   >
-                    <span className="font-bold">3.5 Flash</span>
+                    <span className="font-bold">2.5 Flash</span>
                     <span className="text-[8px] opacity-60 font-medium">Balanced</span>
                   </button>
                   <button
@@ -707,6 +715,43 @@ export default function DashboardScreen({
                     <span className="text-[8px] opacity-60 font-medium">Deep Logic</span>
                   </button>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-[11px] uppercase font-mono text-gray-500">CONNECT GEMINI API KEY</label>
+                  {customKeyInput ? (
+                    <span className="text-[9px] font-mono text-emerald-400 uppercase tracking-widest flex items-center gap-1">
+                      ● Active
+                    </span>
+                  ) : (
+                    <span className="text-[9px] font-mono text-cyan-400/60 uppercase tracking-widest flex items-center gap-1">
+                      ● Workspace Core
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="password"
+                    value={customKeyInput}
+                    onChange={(e) => handleSaveCustomKey(e.target.value)}
+                    className="flex-1 px-4 py-2.5 bg-zinc-900 border border-white/10 rounded-xl text-xs font-mono text-cyan-400 focus:border-cyan-400 focus:outline-none"
+                    placeholder="AIzaSy... (Connect your own API key)"
+                  />
+                  {customKeyInput && (
+                    <button
+                      type="button"
+                      onClick={() => handleSaveCustomKey("")}
+                      className="px-3 py-2 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 text-rose-400 text-[10px] font-bold font-mono rounded-xl transition-all"
+                      title="Disconnect Key"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <p className="text-[9px] text-gray-500 leading-normal">
+                  Saved securely in your browser cache. This bypasses workspace quotas with direct, dedicated AI pipelines.
+                </p>
               </div>
 
               <div className="space-y-2">

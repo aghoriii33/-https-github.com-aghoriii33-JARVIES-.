@@ -136,7 +136,7 @@ export default function App() {
   const [userName, setUserName] = useState("Tony Stark");
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const [userAvatar, setUserAvatar] = useState<UserAvatar | null>(null);
-  const [aiModel, setAiModel] = useState("gemini-2.0-flash-exp");
+  const [aiModel, setAiModel] = useState("gemini-2.5-flash");
   const [voiceOutput, setVoiceOutput] = useState(() => {
     return localStorage.getItem("jarvis_voice") !== "false";
   });
@@ -467,12 +467,16 @@ export default function App() {
 
       while (attempt < maxRetries) {
         try {
+          const savedKey = localStorage.getItem("jarvis_gemini_api_key") || "";
           response = await fetch("/api/chat", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              "x-custom-key": savedKey
+            },
             body: JSON.stringify({
               message: rawText,
-              model: "gemini-3.5-flash",
+              model: aiModel,
               documents: documents,
               persona: persona,
               history: activeConversation.messages.map((m) => ({

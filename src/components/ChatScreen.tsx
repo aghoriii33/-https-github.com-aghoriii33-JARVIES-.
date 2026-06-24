@@ -26,6 +26,10 @@ import HologramOverlay from "./HologramOverlay";
 import { KnowledgeVerificationBadge } from "./KnowledgeVerificationBadge";
 import ExportMenu from "./ExportMenu";
 import { soundEngine } from "../lib/sound-engine";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface ChatScreenProps {
   initialMessages: Message[];
@@ -328,9 +332,41 @@ export default function ChatScreen({
                       : "bg-gradient-to-tr from-pink-950/30 to-purple-950/40 border-pink-500/20 rounded-tr-none text-white shadow-[0_4px_25px_rgba(236,72,153,0.05)]"
                   }`}
                 >
-                  <p className="text-sm font-sans font-normal leading-relaxed whitespace-pre-wrap select-text">
-                    {msg.text}
-                  </p>
+                  <div className="text-sm font-sans font-normal leading-relaxed overflow-x-auto space-y-2">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        code(props: any) {
+                          const { children, className, node, ...rest } = props;
+                          const match = /language-(\w+)/.exec(className || '');
+                          return match ? (
+                            <SyntaxHighlighter
+                              {...rest}
+                              PreTag="div"
+                              children={String(children).replace(/\n$/, '')}
+                              language={match[1]}
+                              style={atomDark}
+                              className="rounded-md border border-white/10 !bg-black/50"
+                            />
+                          ) : (
+                            <code {...rest} className={`${className || ''} bg-black/40 rounded px-1.5 py-0.5 text-cyan-200 font-mono text-[13px]`}>
+                              {children}
+                            </code>
+                          );
+                        },
+                        p: ({ children }) => <p className="whitespace-pre-wrap">{children}</p>,
+                        ul: ({ children }) => <ul className="list-disc pl-4 space-y-1">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal pl-4 space-y-1">{children}</ol>,
+                        li: ({ children }) => <li>{children}</li>,
+                        h1: ({ children }) => <h1 className="text-xl font-bold mt-2 mb-1">{children}</h1>,
+                        h2: ({ children }) => <h2 className="text-lg font-bold mt-2 mb-1">{children}</h2>,
+                        h3: ({ children }) => <h3 className="text-base font-bold mt-2 mb-1">{children}</h3>,
+                        a: ({ href, children }) => <a href={href} target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline">{children}</a>
+                      }}
+                    >
+                      {msg.text}
+                    </ReactMarkdown>
+                  </div>
 
                   {/* Render Premium Diagnostic Telemetry sub-metrics if available */}
                   {isJARVIS && msg.metrics && (

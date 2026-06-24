@@ -12,6 +12,7 @@ import {
   ConfirmationResult
 } from "firebase/auth";
 import { getFirestore, Firestore, initializeFirestore } from "firebase/firestore";
+import firebaseConfig from "../firebase-applet-config.json";
 
 let app: FirebaseApp;
 export let auth: Auth;
@@ -23,20 +24,11 @@ export const initFirebase = async () => {
   if (isInitialized) return { app, auth, db };
   
   try {
-    const response = await fetch('/firebase-applet-config.json');
-    if (!response.ok) throw new Error("Config not found");
-    let config;
-    try {
-      config = await response.json();
-    } catch (err) {
-      throw new Error("Failed to parse firebase-applet-config.json. Make sure the file exists and is valid JSON.");
-    }
-    
-    app = initializeApp(config);
+    app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = initializeFirestore(app, {
       experimentalForceLongPolling: true
-    }, config.firestoreDatabaseId); // Fix default DB issue
+    }, firebaseConfig.firestoreDatabaseId); // Fix default DB issue
     isInitialized = true;
     return { app, auth, db };
   } catch (error) {

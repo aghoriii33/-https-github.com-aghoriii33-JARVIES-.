@@ -76,9 +76,13 @@ export default function ComplianceEngineScreen({ onNavigate }: ComplianceEngineS
     setQuery("");
 
     try {
+      const savedKey = localStorage.getItem("jarvis_gemini_api_key") || "";
       const res = await fetch("/api/compliance-query", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "x-custom-key": savedKey
+        },
         body: JSON.stringify({
           query,
           documents: documents.map(d => ({ name: d.name, text: d.text || "" }))

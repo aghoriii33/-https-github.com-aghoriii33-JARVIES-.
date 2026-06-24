@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, ChangeEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   ArrowLeft, 
@@ -48,6 +48,19 @@ export default function MediaGeneratorScreen({ onBack }: MediaGeneratorScreenPro
   const [selectedLighting, setSelectedLighting] = useState("Cinematic Volumetric");
   const [selectedGrade, setSelectedGrade] = useState("Hollywood Film LUT");
   const [selectedStyle, setSelectedStyle] = useState("Hollywood Cinematic");
+
+  const [referenceImage, setReferenceImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setReferenceImage(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Dolby Vision Core States
   const [dolbyVisionEnabled, setDolbyVisionEnabled] = useState(true);
@@ -107,9 +120,13 @@ export default function MediaGeneratorScreen({ onBack }: MediaGeneratorScreenPro
     setError(null);
 
     try {
+      const savedKey = localStorage.getItem("jarvis_gemini_api_key") || "";
       const res = await fetch("/api/enhance-prompt", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "x-custom-key": savedKey
+        },
         body: JSON.stringify({
           prompt,
           presetFilters: {
@@ -146,42 +163,58 @@ export default function MediaGeneratorScreen({ onBack }: MediaGeneratorScreenPro
     setStatusText("Initializing hyper-rendering engines...");
 
     if (mode === "image") {
-      // Direct high-fidelity simulated image generation matches Midjourney spec
       setStatusText("Synthesizing luxury light field matrices...");
-      await new Promise((r) => setTimeout(r, 2200));
+      
+      try {
+        const savedKey = localStorage.getItem("jarvis_gemini_api_key") || "";
+        const res = await fetch("/api/generate-image", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "x-custom-key": savedKey
+          },
+          body: JSON.stringify({
+            prompt: `${prompt}. ${selectedCamera}, ${selectedLens}, ${selectedLighting}, ${selectedGrade}, ${selectedStyle}`,
+            model,
+            aspectRatio,
+            imageSize: resolution === "4k" ? "4K" : resolution === "1080p" ? "2K" : "1K"
+          })
+        });
 
-      // Choose beautiful premium nature/technology theme photos that match prompts if specified
-      const p = prompt.toLowerCase();
-      let sourceUrl = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80"; // Abstract liquid art
-      if (p.includes("car") || p.includes("vehicle") || p.includes("cyberpunk")) {
-        sourceUrl = "https://images.unsplash.com/photo-15423148 scale-2.5-fit-crop&w=1200&q=80?auto=format"; // Cyberpunk vehicle
-        sourceUrl = "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1200&q=80"; // Luxury supercar
-      } else if (p.includes("city") || p.includes("architect") || p.includes("tokyo")) {
-        sourceUrl = "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80"; // Tokyo Neon
-      } else if (p.includes("anime") || p.includes("manga") || p.includes("character")) {
-        sourceUrl = "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1200&q=80"; // Anime neon street
-      } else if (p.includes("nature") || p.includes("mountain") || p.includes("landscape")) {
-        sourceUrl = "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80"; // Epic mountains
-      } else if (p.includes("fashion") || p.includes("cyber") || p.includes("portrait")) {
-        sourceUrl = "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=80"; // Tech fashion
+        let data: any = {};
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          try { data = await res.json(); } catch (e) {}
+        }
+
+        if (!res.ok) throw new Error(data.error || "Failed to generate image.");
+        
+        setImageUrl(data.imageUrl);
+      } catch (err: any) {
+        console.error(err);
+        setError(err.message || "Failed to generate image.");
+      } finally {
+        setIsGenerating(false);
+        setStatusText("");
       }
-
-      setImageUrl(sourceUrl);
-      setIsGenerating(false);
-      setStatusText("");
       return;
     }
 
     // Video Mode Sequence
     try {
+      const savedKey = localStorage.getItem("jarvis_gemini_api_key") || "";
       const res = await fetch("/api/generate-video", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "x-custom-key": savedKey
+        },
         body: JSON.stringify({
           prompt,
           model,
           resolution,
-          aspectRatio
+          aspectRatio,
+          referenceImage
         })
       });
 
@@ -212,9 +245,13 @@ export default function MediaGeneratorScreen({ onBack }: MediaGeneratorScreenPro
 
   const pollStatus = async (opName: string) => {
     try {
+      const savedKey = localStorage.getItem("jarvis_gemini_api_key") || "";
       const res = await fetch("/api/video-status", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "x-custom-key": savedKey
+        },
         body: JSON.stringify({ operationName: opName })
       });
       
@@ -295,14 +332,14 @@ export default function MediaGeneratorScreen({ onBack }: MediaGeneratorScreenPro
           {/* Engine Selector */}
           <div className="p-1 bg-zinc-950 border border-white/15 rounded-xl flex gap-1">
             <button
-              onClick={() => { setMode("video"); setError(null); }}
+              onClick={() => { setMode("video"); setModel("veo-3.1-lite-generate-preview"); setAspectRatio("16:9"); setError(null); }}
               className={`flex-1 py-2.5 rounded-lg text-xs font-mono font-bold tracking-wider flex items-center justify-center gap-2 transition-all ${mode === "video" ? "bg-amber-950/45 border border-amber-500/35 text-amber-400 shadow-[0_2px_10px_rgba(245,158,11,0.1)]" : "text-gray-500 hover:text-gray-300"}`}
             >
               <Film className="w-4 h-4" />
               SORA CINEMATIC VIDEO
             </button>
             <button
-              onClick={() => { setMode("image"); setError(null); }}
+              onClick={() => { setMode("image"); setModel("gemini-3.1-flash-image"); setAspectRatio("1:1"); setError(null); }}
               className={`flex-1 py-2.5 rounded-lg text-xs font-mono font-bold tracking-wider flex items-center justify-center gap-2 transition-all ${mode === "image" ? "bg-cyan-950/45 border border-cyan-500/35 text-cyan-400 shadow-[0_2px_10px_rgba(6,182,212,0.1)]" : "text-gray-500 hover:text-gray-300"}`}
             >
               <ImageIcon className="w-4 h-4" />
@@ -328,6 +365,45 @@ export default function MediaGeneratorScreen({ onBack }: MediaGeneratorScreenPro
                 placeholder={mode === 'video' ? "Describe your Hollywood action sequence or luxury showcase..." : "Describe premium photography, character assets, architectural layout..."}
                 disabled={isGenerating || isEnhancing}
               />
+
+              {mode === 'video' && (
+                <div className="mt-2 flex flex-col gap-2">
+                  <label className="text-[10px] font-mono text-gray-500 uppercase tracking-widest flex items-center justify-between">
+                    <span>Reference Image (Optional)</span>
+                    {referenceImage && <span className="text-cyan-400">Image Uploaded</span>}
+                  </label>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleImageUpload} 
+                    ref={fileInputRef}
+                    className="hidden" 
+                  />
+                  <div className="flex gap-2 items-center">
+                    <button 
+                      type="button" 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3 py-2 bg-zinc-950 border border-white/10 rounded-lg text-xs text-gray-400 hover:text-cyan-400 hover:border-cyan-500/40 transition-all font-mono"
+                    >
+                      Choose File
+                    </button>
+                    {referenceImage && (
+                      <button
+                        type="button"
+                        onClick={() => setReferenceImage(null)}
+                        className="text-[10px] text-red-400/80 hover:text-red-400 uppercase tracking-widest font-mono"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  {referenceImage && (
+                    <div className="h-16 w-16 mt-1 rounded-md overflow-hidden border border-white/10 relative">
+                      <img src={referenceImage} alt="Reference" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Intelligent Prompt Enhancer Button */}
               <button
@@ -458,27 +534,65 @@ export default function MediaGeneratorScreen({ onBack }: MediaGeneratorScreenPro
                     onChange={(e) => setAspectRatio(e.target.value)}
                     className="w-full bg-zinc-950 border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono text-gray-300 focus:outline-none focus:border-cyan-500"
                   >
-                    <option value="16:9">16:9 Landscape</option>
-                    <option value="9:16">9:16 Portrait</option>
-                    <option value="1:1">1:1 Square</option>
-                    <option value="2.39:1">2.39:1 Cinemascope</option>
+                    {mode === 'image' ? (
+                      <>
+                        <option value="1:1">1:1 Square</option>
+                        <option value="2:3">2:3 Vertical</option>
+                        <option value="3:2">3:2 Horizontal</option>
+                        <option value="3:4">3:4 Portrait</option>
+                        <option value="4:3">4:3 Landscape</option>
+                        <option value="9:16">9:16 Story</option>
+                        <option value="16:9">16:9 Cinema</option>
+                        <option value="21:9">21:9 Ultrawide</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="16:9">16:9 Landscape</option>
+                        <option value="9:16">9:16 Portrait</option>
+                      </>
+                    )}
                   </select>
                 </div>
 
                 {/* Model Resolution select */}
                 <div className="space-y-1">
-                  <span className="text-[8px] font-mono text-gray-500 uppercase tracking-widest block">Render Quality</span>
-                  <select 
-                    value={model} 
-                    onChange={(e) => {
-                      setModel(e.target.value);
-                      setResolution(e.target.value.includes("lite") ? "1080p" : "4k");
-                    }}
-                    className="w-full bg-zinc-950 border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono text-gray-300 focus:outline-none focus:border-cyan-500"
-                  >
-                    <option value="veo-3.1-lite-generate-preview">1080p (Standard Lite)</option>
-                    <option value="veo-3.1-generate-preview">4K UHD (Master Pro)</option>
-                  </select>
+                  <span className="text-[8px] font-mono text-gray-500 uppercase tracking-widest block">Render Engine & Quality</span>
+                  {mode === 'image' ? (
+                    <select 
+                      value={model} 
+                      onChange={(e) => {
+                        setModel(e.target.value);
+                      }}
+                      className="w-full bg-zinc-950 border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono text-gray-300 focus:outline-none focus:border-cyan-500 mb-2"
+                    >
+                      <option value="gemini-3.1-flash-image-preview">Flash (High-Speed Synthesis)</option>
+                      <option value="gemini-3-pro-image-preview">Pro (Studio-Quality Master)</option>
+                    </select>
+                  ) : (
+                    <select 
+                      value={model} 
+                      onChange={(e) => {
+                        setModel(e.target.value);
+                        setResolution(e.target.value.includes("lite") ? "1080p" : "4k");
+                      }}
+                      className="w-full bg-zinc-950 border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono text-gray-300 focus:outline-none focus:border-cyan-500"
+                    >
+                      <option value="veo-3.1-lite-generate-preview">1080p (Standard Lite)</option>
+                      <option value="veo-3.1-fast-generate-preview">Fast 1080p (Action Video)</option>
+                      <option value="veo-3.1-generate-preview">4K UHD (Master Pro)</option>
+                    </select>
+                  )}
+                  {mode === 'image' && (
+                    <select
+                      value={resolution}
+                      onChange={(e) => setResolution(e.target.value)}
+                      className="w-full bg-zinc-950 border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono text-gray-300 focus:outline-none focus:border-cyan-500"
+                    >
+                      <option value="1080p">1K (Standard)</option>
+                      <option value="2k">2K (High Res)</option>
+                      <option value="4k">4K (Ultra HD)</option>
+                    </select>
+                  )}
                 </div>
 
               </div>

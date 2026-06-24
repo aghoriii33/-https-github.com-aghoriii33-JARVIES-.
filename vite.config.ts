@@ -11,6 +11,9 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        workbox: {
+          maximumFileSizeToCacheInBytes: 10000000,
+        },
         manifest: {
           name: 'JARVIS - Premium AI Assistant',
           short_name: 'JARVIS',
